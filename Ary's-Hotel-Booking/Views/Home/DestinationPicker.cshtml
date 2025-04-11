@@ -1,0 +1,193 @@
+﻿@{
+    ViewData["Title"] = "Select Destination";
+}
+
+<style>
+    :root {
+        --calendar-bg: #1F1F23;
+        --calendar-surface-bg: #2A2A2F;
+        --calendar-border-color: #404045;
+        --calendar-text-primary: #EAEAEA;
+        --calendar-text-secondary: #A0A0A5;
+        --calendar-text-disabled: #66666B;
+        --calendar-accent-primary: #00A97F;
+        --calendar-accent-secondary: #4D8CFF;
+        --calendar-hover-bg: #38383E;
+        --calendar-border-radius-lg: 12px;
+        --calendar-border-radius-md: 8px;
+        --calendar-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        --calendar-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        --apply-button-bg: var(--calendar-accent-primary, #74e5b2);
+        --apply-button-text: #1F1F23;
+        --apply-button-hover-bg: var(--calendar-accent-secondary, #a1d8f0);
+        --apply-button-disabled-bg: #555;
+        --transition-fast: 0.15s ease;
+        --transition-medium: 0.3s ease;
+        --ahb-button-glow: rgba(116, 229, 178, 0.3);
+        --ahb-muted-text: #b3c2cc;
+    }
+
+    .destination-picker {
+        font-family: var(--calendar-font-family);
+        background-color: var(--calendar-bg);
+        color: var(--calendar-text-primary);
+        border-radius: var(--calendar-border-radius-lg);
+        box-shadow: var(--calendar-shadow);
+        padding: 1.5rem 2rem;
+        max-width: 550px;
+        margin: 2rem auto;
+        overflow: hidden;
+    }
+
+    .destination-picker__title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--calendar-text-primary);
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .destination-picker__search {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .destination-picker__input {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--calendar-text-primary);
+        padding: 0.95rem 1rem;
+        padding-left: 2.5rem;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+        font-size: 1rem;
+        height: 52px;
+        line-height: normal;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+        .destination-picker__input::placeholder {
+            color: var(--ahb-muted-text);
+            opacity: 1;
+        }
+
+        .destination-picker__input:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--calendar-accent-primary);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
+        }
+
+    .destination-picker__search-icon {
+        position: absolute;
+        left: 0.9rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        fill: var(--calendar-text-secondary);
+        pointer-events: none;
+    }
+
+    .destination-picker__suggestions {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid var(--calendar-border-color);
+        border-radius: var(--calendar-border-radius-md);
+        background-color: var(--calendar-surface-bg);
+        min-height: 50px; 
+    }
+
+        .destination-picker__suggestions:empty::after {
+            content: "No matching destinations found.";
+            display: block;
+            padding: 1rem;
+            text-align: center;
+            color: var(--calendar-text-secondary);
+            font-size: 0.9rem;
+        }
+
+
+    .destination-picker__suggestion-item {
+        padding: 0.8rem 1.2rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--calendar-border-color);
+        transition: background-color var(--transition-fast);
+        font-size: 0.95rem;
+    }
+
+        .destination-picker__suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .destination-picker__suggestion-item:hover {
+            background-color: var(--calendar-hover-bg);
+            color: var(--calendar-text-primary);
+        }
+
+        .destination-picker__suggestion-item.is-selected {
+            background-color: var(--calendar-accent-primary-light);
+            color: var(--calendar-accent-primary);
+            font-weight: 500;
+        }
+
+
+    .destination-picker__footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--calendar-border-color);
+    }
+
+    .apply-destination-button {
+        background-color: var(--apply-button-bg);
+        color: var(--apply-button-text);
+        border: none;
+        padding: 10px 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color var(--transition-fast), opacity var(--transition-fast), transform 0.1s ease;
+    }
+
+        .apply-destination-button:disabled {
+            background-color: var(--apply-button-disabled-bg);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .apply-destination-button:not(:disabled):hover {
+            background-color: var(--apply-button-hover-bg);
+            transform: scale(1.03);
+        }
+
+        .apply-destination-button:not(:disabled):active {
+            transform: scale(0.98);
+        }
+</style>
+
+<div class="destination-picker">
+    <h2 class="destination-picker__title">Where are you going?</h2>
+
+    <div class="destination-picker__search">
+        <svg class="destination-picker__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+        </svg>
+        <input type="text" id="destination-search-input" class="destination-picker__input" placeholder="Search destinations (e.g., city, hotel)" autofocus>
+    </div>
+
+    <ul class="destination-picker__suggestions" id="suggestions-list">
+    </ul>
+
+    <div class="destination-picker__footer">
+        <button type="button" id="apply-destination-btn" class="apply-destination-button" disabled>Apply Destination</button>
+    </div>
+
+</div>
+
+<script src="~/js/destination-picker.js" asp-append-version="true"></script>
