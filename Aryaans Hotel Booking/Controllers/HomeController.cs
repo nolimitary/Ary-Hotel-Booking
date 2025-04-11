@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
-using System.Collections.Generic; 
+using System.Collections.Generic;
+using System.Linq; 
+using System;      
 
-namespace Aryaans_Hotel_Booking.Controllers 
+namespace Aryaans_Hotel_Booking.Controllers
 {
     public class HomeController : Controller
     {
@@ -44,6 +46,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View(viewModel);
         }
 
+
         public IActionResult GuestPicker()
         {
             return View();
@@ -57,19 +60,102 @@ namespace Aryaans_Hotel_Booking.Controllers
         public IActionResult SearchResults(string destination, string selectedDates, string selectedGuests)
         {
             _logger.LogInformation($"Searching for Destination: {destination}, Dates: {selectedDates}, Guests: {selectedGuests}");
+
+            string decodedGuests = WebUtility.UrlDecode(selectedGuests ?? "");
+            int totalGuests = 0;
+            if (!string.IsNullOrEmpty(decodedGuests))
+            {
+                string[] parts = decodedGuests.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (string part in parts)
+                {
+                    string trimmedPart = part.Trim();
+                    string[] numAndType = trimmedPart.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (numAndType.Length >= 2 && (numAndType[1].Contains("Adult") || numAndType[1].Contains("Kid")))
+                    {
+                        if (Int32.TryParse(numAndType[0], out int count))
+                        {
+                            totalGuests += count;
+                        }
+                    }
+                }
+            }
+            if (totalGuests == 0) totalGuests = 2;
+
             var dummyResults = new List<HotelResultViewModel>();
-            dummyResults.Add(new HotelResultViewModel { HotelName = "Pirin Golf Hotel & Spa", ImageUrl = "/images/pirin-golf.jpg", StarRating = 5, LocationName = "Bansko", DistanceFromCenter = "6.7 km from downtown", ReviewScore = 8.0m, ReviewScoreText = "Very Good", ReviewCount = 716, PricePerNight = 577, CurrencySymbol = "BGN", AvailabilityUrl = "#", RecommendedRooms = new List<RoomInfoViewModel> { new RoomInfoViewModel { RoomTypeName = "Superior Double or Twin", BedInfo = "Multiple bed types" }, new RoomInfoViewModel { RoomTypeName = "Standard Double Room", BedInfo = "1 king bed" } } });
-            dummyResults.Add(new HotelResultViewModel { HotelName = "Grand Hotel Bansko", ImageUrl = "/images/grand-bansko.jpg", StarRating = 4, LocationName = "Bansko", DistanceFromCenter = "1.2 km from downtown", ReviewScore = 7.5m, ReviewScoreText = "Good", ReviewCount = 1050, PricePerNight = 350, CurrencySymbol = "BGN", AvailabilityUrl = "#", RecommendedRooms = new List<RoomInfoViewModel> { new RoomInfoViewModel { RoomTypeName = "Deluxe Double", BedInfo = "1 extra-large double bed" } } });
-            dummyResults.Add(new HotelResultViewModel { HotelName = "Kempinski Hotel Grand Arena", ImageUrl = "/images/kempinski-bansko.jpg", StarRating = 5, LocationName = "Bansko", DistanceFromCenter = "Directly at Gondola", ReviewScore = 9.1m, ReviewScoreText = "Superb", ReviewCount = 880, PricePerNight = 720, CurrencySymbol = "BGN", AvailabilityUrl = "#", RecommendedRooms = new List<RoomInfoViewModel> { new RoomInfoViewModel { RoomTypeName = "Alpine Superior", BedInfo = "Mountain view, 1 king bed" } } });
+
+            var pirinRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
+                (new RoomInfoViewModel { RoomTypeName = "Standard Double Room", BedInfo = "1 king bed" }, 2),
+                (new RoomInfoViewModel { RoomTypeName = "Superior Double or Twin", BedInfo = "Multiple bed types" }, 3),
+                (new RoomInfoViewModel { RoomTypeName = "Junior Suite", BedInfo = "1 king bed, 1 sofa bed" }, 4)
+            };
+            dummyResults.Add(new HotelResultViewModel
+            {
+                HotelName = "Pirin Golf Hotel & Spa",
+                ImageUrl = "/images/pirin-golf.jpg",
+                StarRating = 5,
+                LocationName = "Bansko",
+                DistanceFromCenter = "6.7 km from downtown",
+                ReviewScore = 8.0m,
+                ReviewScoreText = "Very Good",
+                ReviewCount = 716,
+                PricePerNight = 577,
+                CurrencySymbol = "BGN",
+                AvailabilityUrl = "#",
+                RecommendedRooms = pirinRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
+            });
+
+
+            var grandBanskoRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
+                 (new RoomInfoViewModel { RoomTypeName = "Economy Double", BedInfo = "1 double bed" }, 2),
+                 (new RoomInfoViewModel { RoomTypeName = "Deluxe Double", BedInfo = "1 extra-large double bed" }, 2),
+                 (new RoomInfoViewModel { RoomTypeName = "Family Room", BedInfo = "Connecting rooms available" }, 4)
+            };
+            dummyResults.Add(new HotelResultViewModel
+            {
+                HotelName = "Grand Hotel Bansko",
+                ImageUrl = "/images/grand-bansko.jpg",
+                StarRating = 4,
+                LocationName = "Bansko",
+                DistanceFromCenter = "1.2 km from downtown",
+                ReviewScore = 7.5m,
+                ReviewScoreText = "Good",
+                ReviewCount = 1050,
+                PricePerNight = 350,
+                CurrencySymbol = "BGN",
+                AvailabilityUrl = "#",
+                RecommendedRooms = grandBanskoRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
+            });
+
+
+            var kempinskiRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
+                 (new RoomInfoViewModel { RoomTypeName = "Deluxe Room", BedInfo = "1 king bed or 2 twin beds" }, 2),
+                 (new RoomInfoViewModel { RoomTypeName = "Alpine Superior", BedInfo = "Mountain view, 1 king bed" }, 2),
+                 (new RoomInfoViewModel { RoomTypeName = "Junior Suite", BedInfo = "1 king bed, separate living area" }, 3)
+            };
+            dummyResults.Add(new HotelResultViewModel
+            {
+                HotelName = "Kempinski Hotel Grand Arena",
+                ImageUrl = "/images/kempinski-bansko.jpg",
+                StarRating = 5,
+                LocationName = "Bansko",
+                DistanceFromCenter = "Directly at Gondola",
+                ReviewScore = 9.1m,
+                ReviewScoreText = "Superb",
+                ReviewCount = 880,
+                PricePerNight = 720,
+                CurrencySymbol = "BGN",
+                AvailabilityUrl = "#",
+                RecommendedRooms = kempinskiRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
+            });
+
 
             var viewModel = new SearchResultsViewModel
             {
                 SearchDestination = WebUtility.UrlDecode(destination ?? "Unknown"),
                 SearchDates = WebUtility.UrlDecode(selectedDates ?? "Any"),
-                SearchGuests = WebUtility.UrlDecode(selectedGuests ?? "Default"),
+                SearchGuests = decodedGuests,
                 Results = dummyResults
             };
-
 
             return View("Results", viewModel);
         }
