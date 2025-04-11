@@ -16,7 +16,9 @@
 }
 
 body.ahb-dark-theme {
-    background: linear-gradient(to bottom, var(--ahb-dark-bg) 0%, var(--ahb-dark-bg-alt) 100%);
+    background: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02)), /* Subtle Noise Overlay */
+    linear-gradient(to bottom, var(--ahb-dark-bg) 0%, var(--ahb-dark-bg-alt) 100%); /* Original Gradient */
+    background-size: auto, auto, auto, 2px 2px; /* Control noise pattern size */
     color: var(--ahb-light-text);
     font-family: var(--ahb-font);
     margin: 0;
@@ -84,7 +86,6 @@ body.ahb-dark-theme {
         font-weight: 600;
     }
 
-
     .navbar-nav .nav-link::after {
         content: '';
         display: block;
@@ -108,6 +109,8 @@ body.ahb-dark-theme {
     min-height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .ahb-main {
@@ -116,7 +119,7 @@ body.ahb-dark-theme {
     margin: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start; 
     background: radial-gradient(circle at 20% 30%, rgba(116,229,178, 0.05), transparent 60%), radial-gradient(circle at 80% 80%, rgba(116,229,178, 0.03), transparent 60%);
 }
 
@@ -163,141 +166,3 @@ body.ahb-dark-theme {
             color: var(--ahb-secondary-color);
         }
 
-.litepicker {
-    --litepicker-bg-color: #1b1f26;
-    --litepicker-text-color: #f8f9fa;
-    --litepicker-accent: #74e5b2;
-    --litepicker-accent-hover: #5cd2a0;
-    --litepicker-muted: #a1b1bd;
-    background-color: var(--litepicker-bg-color) !important;
-    color: var(--litepicker-text-color) !important;
-    border: 1px solid var(--ahb-border-color) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.6) !important;
-    font-family: var(--ahb-font) !important;
-    padding: 1rem !important;
-    z-index: 99999 !important;
-}
-
-    .litepicker .container__months {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 32px !important;
-        flex-wrap: nowrap !important;
-        min-width: 650px !important;
-        padding-bottom: 1rem;
-    }
-
-    .litepicker .month-item {
-        background-color: transparent !important;
-    }
-
-    .litepicker .month-item-header {
-        font-weight: 600;
-        font-size: 1.1rem;
-        color: var(--litepicker-text-color) !important;
-        padding-bottom: 0.75rem;
-        text-align: center;
-    }
-
-    .litepicker .month-item-weekdays-row {
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: var(--litepicker-muted) !important;
-        margin-bottom: 0.5rem;
-        padding: 0 0.25rem;
-    }
-
-        .litepicker .month-item-weekdays-row > div {
-            text-align: center;
-        }
-
-    .litepicker .day-item {
-        color: var(--litepicker-text-color) !important;
-        border-radius: 10px !important;
-        transition: background-color 0.2s ease, color 0.2s ease;
-        padding: 0.4rem !important;
-        line-height: 1.5;
-        text-align: center;
-    }
-
-        .litepicker .day-item:hover {
-            background-color: rgba(116, 229, 178, 0.15) !important;
-            color: var(--litepicker-accent) !important;
-        }
-
-        .litepicker .day-item.is-start-date,
-        .litepicker .day-item.is-end-date {
-            background-color: var(--litepicker-accent) !important;
-            color: #121212 !important;
-            font-weight: 700 !important;
-        }
-
-        .litepicker .day-item.is-in-range {
-            background-color: rgba(116, 229, 178, 0.10) !important;
-            color: var(--litepicker-text-color);
-            border-radius: 0 !important;
-        }
-
-            .litepicker .day-item.is-in-range.is-start-date {
-                border-top-left-radius: 10px !important;
-                border-bottom-left-radius: 10px !important;
-            }
-
-            .litepicker .day-item.is-in-range.is-end-date {
-                border-top-right-radius: 10px !important;
-                border-bottom-right-radius: 10px !important;
-            }
-
-        .litepicker .day-item.is-locked {
-            color: var(--ahb-muted-text) !important;
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-            .litepicker .day-item.is-locked:hover {
-                background-color: transparent !important;
-            }
-
-    .litepicker .button-previous-month,
-    .litepicker .button-next-month {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 50% !important;
-        width: 32px;
-        height: 32px;
-        transition: background-color 0.2s ease;
-    }
-
-        .litepicker .button-previous-month:hover,
-        .litepicker .button-next-month:hover {
-            background-color: rgba(116, 229, 178, 0.2) !important;
-        }
-
-        .litepicker .button-previous-month svg,
-        .litepicker .button-next-month svg {
-            fill: var(--litepicker-text-color) !important;
-        }
-
-    .litepicker .container__footer {
-        padding: 0.75rem 1rem;
-        border-top: 1px solid var(--ahb-border-color);
-        display: flex;
-        justify-content: flex-end;
-        background-color: var(--litepicker-bg-color);
-        border-bottom-left-radius: 16px;
-        border-bottom-right-radius: 16px;
-    }
-
-    .litepicker .button-apply {
-        background-color: var(--litepicker-accent) !important;
-        color: #121212 !important;
-        font-weight: 600;
-        padding: 0.5rem 1.2rem;
-        border-radius: 8px;
-        border: none;
-        transition: background-color 0.3s ease;
-    }
-
-        .litepicker .button-apply:hover {
-            background-color: var(--litepicker-accent-hover) !important;
-        }
