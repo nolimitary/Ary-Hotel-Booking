@@ -91,7 +91,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             dummyResults.Add(new HotelResultViewModel
             {
                 HotelName = "Pirin Golf Hotel & Spa",
-                ImageUrl = "/images/pirin-golf.jpg",
+                ImageUrl = "/pirinGolf.jpeg",
                 StarRating = 5,
                 LocationName = "Bansko",
                 DistanceFromCenter = "6.7 km from downtown",
@@ -113,7 +113,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             dummyResults.Add(new HotelResultViewModel
             {
                 HotelName = "Grand Hotel Bansko",
-                ImageUrl = "/images/grand-bansko.jpg",
+                ImageUrl = "/grandHotelBansko.jpg",
                 StarRating = 4,
                 LocationName = "Bansko",
                 DistanceFromCenter = "1.2 km from downtown",
@@ -135,7 +135,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             dummyResults.Add(new HotelResultViewModel
             {
                 HotelName = "Kempinski Hotel Grand Arena",
-                ImageUrl = "/images/kempinski-bansko.jpg",
+                ImageUrl = "/Kempinski.jpg",
                 StarRating = 5,
                 LocationName = "Bansko",
                 DistanceFromCenter = "Directly at Gondola",
