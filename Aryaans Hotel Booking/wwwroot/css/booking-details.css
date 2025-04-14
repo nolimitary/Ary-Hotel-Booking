@@ -1,0 +1,148 @@
+﻿
+.booking-details-container {
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+    color: var(--ahb-light-text);
+}
+
+    .booking-details-container h1,
+    .booking-details-container h4 {
+        color: var(--ahb-light-text); 
+        margin-bottom: 0.75rem;
+    }
+
+    .booking-details-container > p { 
+        color: var(--ahb-muted-text);
+        margin-bottom: 1.5rem;
+    }
+
+    .booking-details-container hr {
+        border-color: var(--ahb-muted-text);
+        opacity: 0.3;
+        margin-top: 0;
+        margin-bottom: 2rem;
+    }
+
+
+    .booking-details-container .card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--ahb-light-text);
+        border-radius: 8px; 
+        overflow: hidden; 
+    }
+
+    .booking-details-container .card-img-top {
+        max-height: 300px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .booking-details-container .card-body {
+        padding: 1.5rem;
+    }
+
+    .booking-details-container .card-title {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .booking-details-container .card-text .text-muted {
+        color: var(--ahb-muted-text) !important; 
+        display: block; 
+        margin-top: 0.25rem;
+        font-size: 0.9em;
+    }
+
+    .booking-details-container .card-text .hotel-stars span {
+        color: #ffc107;
+        font-size: 1.1em;
+        margin-right: 2px;
+    }
+
+    .booking-details-container .card-text .review-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; 
+        margin-top: 0.75rem;
+    }
+
+        .booking-details-container .card-text .review-info .badge {
+            font-size: 0.9em;
+            padding: 0.5em 0.7em;
+            font-weight: 600;
+        }
+
+    .booking-details-container .card-text .price-info {
+        font-size: 1.4em;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        color: var(--ahb-primary-color);
+    }
+
+    .booking-details-container form .form-label {
+        color: var(--ahb-muted-text);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .booking-details-container form .form-control {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--ahb-light-text);
+        padding: 0.75rem 1rem; 
+        border-radius: 6px; 
+        transition: all 0.2s ease-in-out;
+        height: auto; 
+    }
+
+        .booking-details-container form .form-control::placeholder {
+            color: var(--ahb-muted-text);
+            opacity: 0.7;
+        }
+
+        .booking-details-container form .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--ahb-primary-color);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
+        }
+
+    .booking-details-container form .estimated-total {
+        color: var(--ahb-light-text);
+        font-size: 1.2em;
+        font-weight: 500;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: right; 
+    }
+
+    .booking-details-container form .btn {
+        background-color: var(--ahb-primary-color);
+        color: var(--ahb-dark-bg); 
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1em;
+        border: none;
+        border-radius: 6px;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        margin-top: 1rem;
+    }
+
+        .booking-details-container form .btn:hover {
+            background-color: var(--ahb-secondary-color); 
+            box-shadow: 0 4px 15px var(--ahb-button-glow);
+        }
+
+    .booking-details-container .back-link {
+        color: var(--ahb-muted-text);
+        text-decoration: none;
+        display: inline-block; 
+        margin-top: 1rem;
+        transition: color 0.2s ease;
+    }
+
+        .booking-details-container .back-link:hover {
+            color: var(--ahb-light-text);
+            text-decoration: underline;
+        }

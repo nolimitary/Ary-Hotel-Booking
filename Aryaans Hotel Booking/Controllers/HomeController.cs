@@ -57,6 +57,55 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View();
         }
 
+
+
+
+        [HttpGet]
+        public IActionResult BookingDetails(string hotelName)
+        {
+            string decodedHotelName = WebUtility.UrlDecode(hotelName ?? "");
+            _logger.LogInformation($"Loading booking details for hotel: {decodedHotelName}");
+
+            HotelResultViewModel? selectedHotel = GetDummyHotelByName(decodedHotelName); 
+
+            if (selectedHotel == null)
+            {
+                _logger.LogWarning($"Hotel not found: {decodedHotelName}");
+                return NotFound($"Details for hotel '{decodedHotelName}' not found.");
+            }
+
+            var bookingViewModel = new BookingViewModel
+            {
+                HotelName = selectedHotel.HotelName,
+                ImageUrl = selectedHotel.ImageUrl,
+                StarRating = selectedHotel.StarRating,
+                LocationName = selectedHotel.LocationName,
+                DistanceFromCenter = selectedHotel.DistanceFromCenter,
+                ReviewScore = selectedHotel.ReviewScore,
+                ReviewScoreText = selectedHotel.ReviewScoreText,
+                ReviewCount = selectedHotel.ReviewCount,
+                PricePerNight = selectedHotel.PricePerNight,
+                CurrencySymbol = selectedHotel.CurrencySymbol,
+            };
+
+            return View("BookingDetails", bookingViewModel); 
+        }
+
+        private HotelResultViewModel? GetDummyHotelByName(string name)
+        {
+            var allHotels = new List<HotelResultViewModel>();
+
+            allHotels.Add(new HotelResultViewModel { HotelName = "Pirin Golf Hotel & Spa", ImageUrl = "/images/pirin-golf.jpg", StarRating = 5, LocationName = "Bansko", DistanceFromCenter = "6.7 km", ReviewScore = 8.0m, ReviewScoreText = "Very Good", ReviewCount = 716, PricePerNight = 577, CurrencySymbol = "BGN" });
+            allHotels.Add(new HotelResultViewModel { HotelName = "Grand Hotel Bansko", ImageUrl = "/images/grand-bansko.jpg", StarRating = 4, LocationName = "Bansko", DistanceFromCenter = "1.2 km", ReviewScore = 7.5m, ReviewScoreText = "Good", ReviewCount = 1050, PricePerNight = 350, CurrencySymbol = "BGN" });
+            allHotels.Add(new HotelResultViewModel { HotelName = "Kempinski Hotel Grand Arena", ImageUrl = "/images/kempinski-bansko.jpg", StarRating = 5, LocationName = "Bansko", DistanceFromCenter = "Gondola", ReviewScore = 9.1m, ReviewScoreText = "Superb", ReviewCount = 880, PricePerNight = 720, CurrencySymbol = "BGN" });
+
+            allHotels.Add(new HotelResultViewModel { HotelName = "Premier Inn London Canary Wharf (Westferry)", ImageUrl = "/images/placeholder-hotel-1.jpg", StarRating = 3, LocationName = "Limehouse", DistanceFromCenter = "5km", ReviewScore = 4.4m, ReviewScoreText = "Very Good", ReviewCount = 825, PricePerNight = 150, CurrencySymbol = "£" });
+            allHotels.Add(new HotelResultViewModel { HotelName = "The Tower Hotel London", ImageUrl = "/images/placeholder-hotel-2.jpg", StarRating = 4, LocationName = "St Katharine's", DistanceFromCenter = "Near Tower Bridge", ReviewScore = 8.2m, ReviewScoreText = "Very Good", ReviewCount = 14325, PricePerNight = 250, CurrencySymbol = "£" });
+            allHotels.Add(new HotelResultViewModel { HotelName = "Nobu Hotel London Portman Square", ImageUrl = "/images/placeholder-hotel-3.jpg", StarRating = 5, LocationName = "Marylebone", DistanceFromCenter = "Central", ReviewScore = 8.4m, ReviewScoreText = "Very Good", ReviewCount = 1646, PricePerNight = 382, CurrencySymbol = "£" });
+
+            return allHotels.FirstOrDefault(h => h.HotelName.Equals(name, StringComparison.OrdinalIgnoreCase));
+        }
+
         public IActionResult SearchResults(string destination, string selectedDates, string selectedGuests)
         {
             _logger.LogInformation($"Searching for Destination: {destination}, Dates: {selectedDates}, Guests: {selectedGuests}");

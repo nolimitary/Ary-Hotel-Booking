@@ -71,9 +71,13 @@
                             <span class="hotel-result-card__price">@hotel.CurrencySymbol@hotel.PricePerNight</span>
                             <span class="hotel-result-card__price-info">Includes taxes and fees</span>
                         </div>
-                        <a href="@hotel.AvailabilityUrl" class="hotel-result-card__cta-button">
-                            See availability
-                        </a>
+                        <a asp-controller="Home"
+                            asp-action="BookingDetails"
+                            asp-route-hotelName="@System.Net.WebUtility.UrlEncode(hotel.HotelName)"
+                            asp-route-selectedDates="@System.Net.WebUtility.UrlEncode(Model.SearchDates)"
+                            class="hotel-result-card__cta-button">
+                             Book Now
+                         </a>
                     </div>
                 </div>
             </div>
