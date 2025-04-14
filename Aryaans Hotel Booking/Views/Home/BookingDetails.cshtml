@@ -63,8 +63,9 @@
                 </div>
 
 
-                <p style="color: var(--ahb-light-text); font-size: 1.2em; margin-top: 1.5rem;">
-                    Estimated Total: @Model.CurrencySymbol@(Model.PricePerNight * 3) (for 3 nights example)
+                <p class="estimated-total" style="color: var(--ahb-light-text); font-size: 1.2em; margin-top: 1.5rem;">
+                    Total for @Model.NumberOfNights @(Model.NumberOfNights == 1 ? "night" : "nights"):
+                    <strong style="font-size: 1.1em; margin-left: 10px;">@Model.CurrencySymbol@Model.TotalPrice.ToString("N2")</strong>
                 </p>
 
 

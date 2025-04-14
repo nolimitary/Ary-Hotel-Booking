@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic; 
+﻿using System.Collections.Generic;
 
 namespace Aryaans_Hotel_Booking.Models
 {
@@ -14,5 +14,11 @@ namespace Aryaans_Hotel_Booking.Models
         public int ReviewCount { get; set; }
         public decimal PricePerNight { get; set; }
         public string CurrencySymbol { get; set; }
+
+        public int NumberOfNights { get; set; } = 1; 
+        public decimal TotalPrice { get; set; }
+        public string? SelectedDates { get; set; }
+        public string? SelectedGuests { get; set; } 
+
     }
 }

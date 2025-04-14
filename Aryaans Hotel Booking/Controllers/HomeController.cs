@@ -61,18 +61,55 @@ namespace Aryaans_Hotel_Booking.Controllers
 
 
         [HttpGet]
-        public IActionResult BookingDetails(string hotelName)
+        public IActionResult BookingDetails(string hotelName, string selectedDates)
         {
             string decodedHotelName = WebUtility.UrlDecode(hotelName ?? "");
-            _logger.LogInformation($"Loading booking details for hotel: {decodedHotelName}");
+            string decodedDates = WebUtility.UrlDecode(selectedDates ?? "");
 
-            HotelResultViewModel? selectedHotel = GetDummyHotelByName(decodedHotelName); 
+            _logger.LogInformation($"Loading booking details for hotel: {decodedHotelName}, Dates: {decodedDates}");
+
+            HotelResultViewModel? selectedHotel = GetDummyHotelByName(decodedHotelName);
 
             if (selectedHotel == null)
             {
                 _logger.LogWarning($"Hotel not found: {decodedHotelName}");
                 return NotFound($"Details for hotel '{decodedHotelName}' not found.");
             }
+
+            int numberOfNights = 1; 
+            DateTime checkInDate = DateTime.MinValue;
+            DateTime checkOutDate = DateTime.MinValue;
+            string dateParseFormat = "yyyy-MM-dd"; 
+
+            if (!string.IsNullOrEmpty(decodedDates) && decodedDates.Contains(" - "))
+            {
+                string[] dateParts = decodedDates.Split(" - ", StringSplitOptions.TrimEntries);
+                if (dateParts.Length == 2 &&
+                    DateTime.TryParseExact(dateParts[0], dateParseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out checkInDate) &&
+                    DateTime.TryParseExact(dateParts[1], dateParseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out checkOutDate))
+                {
+                    if (checkOutDate > checkInDate)
+                    {
+                        numberOfNights = (int)(checkOutDate - checkInDate).TotalDays;
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Check-out date ({dateParts[1]}) is not after check-in date ({dateParts[0]}). Defaulting to 1 night.");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"Could not parse date range string: '{decodedDates}'. Expected format '{dateParseFormat} - {dateParseFormat}'. Defaulting to 1 night.");
+                }
+            }
+            else
+            {
+                _logger.LogWarning($"Selected dates string is empty or invalid format: '{decodedDates}'. Defaulting to 1 night.");
+            }
+
+
+            decimal totalPrice = selectedHotel.PricePerNight * numberOfNights;
+
 
             var bookingViewModel = new BookingViewModel
             {
@@ -86,9 +123,14 @@ namespace Aryaans_Hotel_Booking.Controllers
                 ReviewCount = selectedHotel.ReviewCount,
                 PricePerNight = selectedHotel.PricePerNight,
                 CurrencySymbol = selectedHotel.CurrencySymbol,
+
+                NumberOfNights = numberOfNights,
+                TotalPrice = totalPrice,
+                SelectedDates = decodedDates 
+                                            
             };
 
-            return View("BookingDetails", bookingViewModel); 
+            return View("BookingDetails", bookingViewModel);
         }
 
         private HotelResultViewModel? GetDummyHotelByName(string name)
