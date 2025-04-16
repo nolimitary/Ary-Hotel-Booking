@@ -291,6 +291,19 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View("Results", viewModel);
         }
 
+        [HttpPost]
+        public IActionResult AddHotel(IFormFile Image, string Country, string City, int StarRating, int ReviewCount, decimal ReviewScore, decimal PricePerNight)
+        {
+            // TODO: Save image to wwwroot/images or other folder
+            // TODO: Save hotel info to database or file
+
+            Console.WriteLine($"[Debug] Hotel: {City}, {Country} | Stars: {StarRating} | Score: {ReviewScore} | Reviews: {ReviewCount} | Price: {PricePerNight}");
+
+            return RedirectToAction("Index");
+        }
+
+
+
         public IActionResult Privacy()
         {
             return View();

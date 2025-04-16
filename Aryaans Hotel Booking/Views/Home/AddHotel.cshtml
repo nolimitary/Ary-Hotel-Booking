@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Add New Hotel";
+}
+<link rel="stylesheet" href="~/css/add-hotel.css" asp-append-version="true" />
+
+<div class="add-hotel-container">
+    <h2>Add New Hotel</h2>
+    <form enctype="multipart/form-data" method="post" asp-action="AddHotel">
+        <div class="form-group">
+            <label>Country</label>
+            <input type="text" name="Country" required />
+        </div>
+
+        <div class="form-group">
+            <label>City</label>
+            <input type="text" name="City" required />
+        </div>
+
+        <div class="form-group">
+            <label>Star Rating</label>
+            <select name="StarRating" required>
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <option value="@i">@i Star@(i > 1 ? "s" : "")</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Number of Reviews</label>
+            <input type="number" name="ReviewCount" min="0" required />
+        </div>
+
+        <div class="form-group">
+            <label>Review Score (0.0 - 10.0)</label>
+            <input type="number" step="0.1" name="ReviewScore" min="0" max="10" required />
+        </div>
+
+        <div class="form-group">
+            <label>Price per Night</label>
+            <input type="number" step="0.01" name="PricePerNight" min="0" required />
+        </div>
+
+        <div class="form-group">
+            <label>Upload Hotel Picture</label>
+            <div class="dropzone" id="dropzone">
+                <span>Drag & Drop an image or click to upload</span>
+                <input type="file" name="Image" accept="image/*" required />
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Add Hotel</button>
+    </form>
+</div>
