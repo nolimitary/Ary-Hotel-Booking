@@ -94,7 +94,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             string virtualPath = $"/images/{fileName}";
             string line = $"{City} Hotel|{Country}|{City}|{StarRating}|{ReviewCount}|{ReviewScore}|{PricePerNight}|{virtualPath}";
 
-            string dataPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Inventory.txt");
+            string dataPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "hotels.txt");
             System.IO.File.AppendAllLines(dataPath, new[] { line });
 
             return RedirectToAction("SearchResults", new
@@ -104,6 +104,7 @@ namespace Aryaans_Hotel_Booking.Controllers
                 selectedGuests = ""
             });
         }
+
 
         public IActionResult BookingDetails(string hotelName, string selectedDates)
         {
@@ -180,8 +181,9 @@ namespace Aryaans_Hotel_Booking.Controllers
 
         private List<HotelResultViewModel> LoadAddedHotels()
         {
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Inventory.txt");
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "hotels.txt");
             var results = new List<HotelResultViewModel>();
+
             if (!System.IO.File.Exists(path)) return results;
 
             foreach (var line in System.IO.File.ReadAllLines(path))
@@ -189,13 +191,14 @@ namespace Aryaans_Hotel_Booking.Controllers
                 var parts = line.Split('|');
                 if (parts.Length >= 8)
                 {
+                    decimal.TryParse(parts[5], out var score);
                     results.Add(new HotelResultViewModel
                     {
                         HotelName = parts[0],
                         LocationName = $"{parts[2]}, {parts[1]}",
                         StarRating = int.TryParse(parts[3], out var s) ? s : 0,
                         ReviewCount = int.TryParse(parts[4], out var c) ? c : 0,
-                        ReviewScore = decimal.TryParse(parts[5], out var score) ? score : 0,
+                        ReviewScore = score,
                         ReviewScoreText = GetReviewText(score),
                         PricePerNight = decimal.TryParse(parts[6], out var price) ? price : 0,
                         ImageUrl = parts[7],
@@ -203,8 +206,10 @@ namespace Aryaans_Hotel_Booking.Controllers
                     });
                 }
             }
+
             return results;
         }
+
 
         private string GetReviewText(decimal score)
         {
