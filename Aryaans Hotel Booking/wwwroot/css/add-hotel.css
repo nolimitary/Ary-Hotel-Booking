@@ -72,3 +72,20 @@
     .submit-btn:hover {
         background-color: var(--ahb-secondary-color, #a1d8f0);
     }
+
+.star-rating {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #444;
+}
+
+    .star-rating .star {
+        transition: color 0.2s;
+    }
+
+        .star-rating .star.selected,
+        .star-rating .star.hover {
+            color: gold;
+        }

@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
-using System.Collections.Generic;
-using System.Linq; 
-using System;      
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
@@ -31,87 +28,105 @@ namespace Aryaans_Hotel_Booking.Controllers
             var startDate = DateTime.Today;
             int numberOfMonths = 12;
             var viewModel = new DatePickerViewModel { StartDate = startDate, NumberOfMonths = numberOfMonths };
+
             DateTime currentMonthDate = new DateTime(startDate.Year, startDate.Month, 1);
             for (int i = 0; i < numberOfMonths; i++)
             {
-                var monthViewModel = new MonthViewModel { Year = currentMonthDate.Year, Month = currentMonthDate.Month, MonthName = currentMonthDate.ToString("MMMM", CultureInfo.InvariantCulture) };
+                var monthViewModel = new MonthViewModel
+                {
+                    Year = currentMonthDate.Year,
+                    Month = currentMonthDate.Month,
+                    MonthName = currentMonthDate.ToString("MMMM", CultureInfo.InvariantCulture)
+                };
+
                 DayOfWeek firstDayOfMonth = currentMonthDate.DayOfWeek;
                 int placeholders = ((int)firstDayOfMonth - (int)DayOfWeek.Monday + 7) % 7;
-                for (int p = 0; p < placeholders; p++) { monthViewModel.Days.Add(new DayViewModel { IsPlaceholder = true }); }
+                for (int p = 0; p < placeholders; p++)
+                {
+                    monthViewModel.Days.Add(new DayViewModel { IsPlaceholder = true });
+                }
+
                 int daysInMonth = DateTime.DaysInMonth(currentMonthDate.Year, currentMonthDate.Month);
-                for (int day = 1; day <= daysInMonth; day++) { var dayDate = new DateTime(currentMonthDate.Year, currentMonthDate.Month, day); monthViewModel.Days.Add(new DayViewModel { DayNumber = day, Date = dayDate, IsToday = (dayDate == DateTime.Today), IsDisabled = (dayDate < DateTime.Today) }); }
+                for (int day = 1; day <= daysInMonth; day++)
+                {
+                    var dayDate = new DateTime(currentMonthDate.Year, currentMonthDate.Month, day);
+                    monthViewModel.Days.Add(new DayViewModel
+                    {
+                        DayNumber = day,
+                        Date = dayDate,
+                        IsToday = (dayDate == DateTime.Today),
+                        IsDisabled = (dayDate < DateTime.Today)
+                    });
+                }
+
                 viewModel.Months.Add(monthViewModel);
                 currentMonthDate = currentMonthDate.AddMonths(1);
             }
+
             return View(viewModel);
         }
 
 
-        public IActionResult GuestPicker()
-        {
-            return View();
-        }
+        public IActionResult GuestPicker() => View();
 
-        public IActionResult DestinationPicker()
-        {
-            return View();
-        }
-
-
-
+        public IActionResult DestinationPicker() => View();
 
         [HttpGet]
+        public IActionResult AddHotel()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult AddHotel(IFormFile Image, string Country, string City, int StarRating, int ReviewCount, decimal ReviewScore, decimal PricePerNight)
+        {
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            Directory.CreateDirectory(uploadsFolder);
+
+            string fileName = Path.GetRandomFileName() + Path.GetExtension(Image.FileName);
+            string filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                Image.CopyTo(stream);
+            }
+
+            string virtualPath = $"/images/{fileName}";
+            string line = $"{City} Hotel|{Country}|{City}|{StarRating}|{ReviewCount}|{ReviewScore}|{PricePerNight}|{virtualPath}";
+
+            string dataPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Inventory.txt");
+            System.IO.File.AppendAllLines(dataPath, new[] { line });
+
+            return RedirectToAction("SearchResults", new
+            {
+                destination = Country,
+                selectedDates = "",
+                selectedGuests = ""
+            });
+        }
+
         public IActionResult BookingDetails(string hotelName, string selectedDates)
         {
             string decodedHotelName = WebUtility.UrlDecode(hotelName ?? "");
             string decodedDates = WebUtility.UrlDecode(selectedDates ?? "");
 
-            _logger.LogInformation($"Loading booking details for hotel: {decodedHotelName}, Dates: {decodedDates}");
-
-            HotelResultViewModel? selectedHotel = GetDummyHotelByName(decodedHotelName);
-
+            var allHotels = GetAllDummyHotels().Concat(LoadAddedHotels()).ToList();
+            var selectedHotel = allHotels.FirstOrDefault(h => h.HotelName.Equals(decodedHotelName, StringComparison.OrdinalIgnoreCase));
             if (selectedHotel == null)
-            {
-                _logger.LogWarning($"Hotel not found: {decodedHotelName}");
-                return NotFound($"Details for hotel '{decodedHotelName}' not found.");
-            }
+                return NotFound($"Hotel '{decodedHotelName}' not found.");
 
-            int numberOfNights = 1; 
-            DateTime checkInDate = DateTime.MinValue;
-            DateTime checkOutDate = DateTime.MinValue;
-            string dateParseFormat = "yyyy-MM-dd"; 
+            DateTime checkIn = DateTime.MinValue, checkOut = DateTime.MinValue;
+            int nights = 1;
 
             if (!string.IsNullOrEmpty(decodedDates) && decodedDates.Contains(" - "))
             {
-                string[] dateParts = decodedDates.Split(" - ", StringSplitOptions.TrimEntries);
-                if (dateParts.Length == 2 &&
-                    DateTime.TryParseExact(dateParts[0], dateParseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out checkInDate) &&
-                    DateTime.TryParseExact(dateParts[1], dateParseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out checkOutDate))
-                {
-                    if (checkOutDate > checkInDate)
-                    {
-                        numberOfNights = (int)(checkOutDate - checkInDate).TotalDays;
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Check-out date ({dateParts[1]}) is not after check-in date ({dateParts[0]}). Defaulting to 1 night.");
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning($"Could not parse date range string: '{decodedDates}'. Expected format '{dateParseFormat} - {dateParseFormat}'. Defaulting to 1 night.");
-                }
-            }
-            else
-            {
-                _logger.LogWarning($"Selected dates string is empty or invalid format: '{decodedDates}'. Defaulting to 1 night.");
+                var parts = decodedDates.Split(" - ");
+                DateTime.TryParseExact(parts[0], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out checkIn);
+                DateTime.TryParseExact(parts[1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out checkOut);
+                if (checkOut > checkIn) nights = (int)(checkOut - checkIn).TotalDays;
             }
 
-
-            decimal totalPrice = selectedHotel.PricePerNight * numberOfNights;
-
-
-            var bookingViewModel = new BookingViewModel
+            return View("BookingDetails", new BookingViewModel
             {
                 HotelName = selectedHotel.HotelName,
                 ImageUrl = selectedHotel.ImageUrl,
@@ -123,162 +138,20 @@ namespace Aryaans_Hotel_Booking.Controllers
                 ReviewCount = selectedHotel.ReviewCount,
                 PricePerNight = selectedHotel.PricePerNight,
                 CurrencySymbol = selectedHotel.CurrencySymbol,
-
-                NumberOfNights = numberOfNights,
-                TotalPrice = totalPrice,
-                SelectedDates = decodedDates 
-                                            
-            };
-
-            return View("BookingDetails", bookingViewModel);
+                NumberOfNights = nights,
+                TotalPrice = selectedHotel.PricePerNight * nights,
+                SelectedDates = decodedDates
+            });
         }
-
-        private List<HotelResultViewModel> GetAllDummyHotels()
-        {
-            return new List<HotelResultViewModel>
-            {
-                new HotelResultViewModel {
-                    HotelName = "Pirin Golf Hotel & Spa",
-                    ImageUrl = "/pirinGolf.jpeg",
-                    StarRating = 5,
-                    LocationName = "Bansko",
-                    DistanceFromCenter = "6.7 km from downtown",
-                    ReviewScore = 8.0m,
-                    ReviewScoreText = "Very Good",
-                    ReviewCount = 716,
-                    PricePerNight = 577,
-                    CurrencySymbol = "BGN",
-                    AvailabilityUrl = "#",
-                    RecommendedRooms = new List<RoomInfoViewModel>()
-                },
-                new HotelResultViewModel {
-                    HotelName = "Grand Hotel Bansko",
-                    ImageUrl = "/grandHotelBansko.jpg",
-                    StarRating = 4,
-                    LocationName = "Bansko",
-                    DistanceFromCenter = "1.2 km from downtown",
-                    ReviewScore = 7.5m,
-                    ReviewScoreText = "Good",
-                    ReviewCount = 1050,
-                    PricePerNight = 350,
-                    CurrencySymbol = "BGN",
-                    AvailabilityUrl = "#",
-                    RecommendedRooms = new List<RoomInfoViewModel>()
-                },
-                new HotelResultViewModel {
-                    HotelName = "Kempinski Hotel Grand Arena",
-                    ImageUrl = "/Kempinski.jpg",
-                    StarRating = 5,
-                    LocationName = "Bansko",
-                    DistanceFromCenter = "Directly at Gondola",
-                    ReviewScore = 9.1m,
-                    ReviewScoreText = "Superb",
-                    ReviewCount = 880,
-                    PricePerNight = 720,
-                    CurrencySymbol = "BGN",
-                    AvailabilityUrl = "#",
-                    RecommendedRooms = new List<RoomInfoViewModel>()
-                }
-            };
-        }
-
-        private HotelResultViewModel? GetDummyHotelByName(string name)
-        {
-            return GetAllDummyHotels().FirstOrDefault(h => h.HotelName.Equals(name, StringComparison.OrdinalIgnoreCase));
-        }
-
 
         public IActionResult SearchResults(string destination, string selectedDates, string selectedGuests)
         {
-            _logger.LogInformation($"Searching for Destination: {destination}, Dates: {selectedDates}, Guests: {selectedGuests}");
-
             string decodedGuests = WebUtility.UrlDecode(selectedGuests ?? "");
-            int totalGuests = 0;
-            if (!string.IsNullOrEmpty(decodedGuests))
-            {
-                string[] parts = decodedGuests.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                foreach (string part in parts)
-                {
-                    string trimmedPart = part.Trim();
-                    string[] numAndType = trimmedPart.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    if (numAndType.Length >= 2 && (numAndType[1].Contains("Adult") || numAndType[1].Contains("Kid")))
-                    {
-                        if (Int32.TryParse(numAndType[0], out int count))
-                        {
-                            totalGuests += count;
-                        }
-                    }
-                }
-            }
-            if (totalGuests == 0) totalGuests = 2;
+            int totalGuests = ParseGuestCount(decodedGuests);
 
-            var dummyResults = new List<HotelResultViewModel>();
-
-            var pirinRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
-                (new RoomInfoViewModel { RoomTypeName = "Standard Double Room", BedInfo = "1 king bed" }, 2),
-                (new RoomInfoViewModel { RoomTypeName = "Superior Double or Twin", BedInfo = "Multiple bed types" }, 3),
-                (new RoomInfoViewModel { RoomTypeName = "Junior Suite", BedInfo = "1 king bed, 1 sofa bed" }, 4)
-            };
-            dummyResults.Add(new HotelResultViewModel
-            {
-                HotelName = "Pirin Golf Hotel & Spa",
-                ImageUrl = "/pirinGolf.jpeg",
-                StarRating = 5,
-                LocationName = "Bansko",
-                DistanceFromCenter = "6.7 km from downtown",
-                ReviewScore = 8.0m,
-                ReviewScoreText = "Very Good",
-                ReviewCount = 716,
-                PricePerNight = 577,
-                CurrencySymbol = "BGN",
-                AvailabilityUrl = "#",
-                RecommendedRooms = pirinRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
-            });
-
-
-            var grandBanskoRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
-                 (new RoomInfoViewModel { RoomTypeName = "Economy Double", BedInfo = "1 double bed" }, 2),
-                 (new RoomInfoViewModel { RoomTypeName = "Deluxe Double", BedInfo = "1 extra-large double bed" }, 2),
-                 (new RoomInfoViewModel { RoomTypeName = "Family Room", BedInfo = "Connecting rooms available" }, 4)
-            };
-            dummyResults.Add(new HotelResultViewModel
-            {
-                HotelName = "Grand Hotel Bansko",
-                ImageUrl = "/grandHotelBansko.jpg",
-                StarRating = 4,
-                LocationName = "Bansko",
-                DistanceFromCenter = "1.2 km from downtown",
-                ReviewScore = 7.5m,
-                ReviewScoreText = "Good",
-                ReviewCount = 1050,
-                PricePerNight = 350,
-                CurrencySymbol = "BGN",
-                AvailabilityUrl = "#",
-                RecommendedRooms = grandBanskoRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
-            });
-
-
-            var kempinskiRooms = new List<(RoomInfoViewModel Room, int Capacity)> {
-                 (new RoomInfoViewModel { RoomTypeName = "Deluxe Room", BedInfo = "1 king bed or 2 twin beds" }, 2),
-                 (new RoomInfoViewModel { RoomTypeName = "Alpine Superior", BedInfo = "Mountain view, 1 king bed" }, 2),
-                 (new RoomInfoViewModel { RoomTypeName = "Junior Suite", BedInfo = "1 king bed, separate living area" }, 3)
-            };
-            dummyResults.Add(new HotelResultViewModel
-            {
-                HotelName = "Kempinski Hotel Grand Arena",
-                ImageUrl = "/Kempinski.jpg",
-                StarRating = 5,
-                LocationName = "Bansko",
-                DistanceFromCenter = "Directly at Gondola",
-                ReviewScore = 9.1m,
-                ReviewScoreText = "Superb",
-                ReviewCount = 880,
-                PricePerNight = 720,
-                CurrencySymbol = "BGN",
-                AvailabilityUrl = "#",
-                RecommendedRooms = kempinskiRooms.Where(r => r.Capacity >= totalGuests).Select(r => r.Room).ToList()
-            });
-
+            var dummyResults = GetAllDummyHotels();
+            var addedHotels = LoadAddedHotels();
+            dummyResults.AddRange(addedHotels);
 
             var viewModel = new SearchResultsViewModel
             {
@@ -291,23 +164,100 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View("Results", viewModel);
         }
 
-        [HttpPost]
-        public IActionResult AddHotel(IFormFile Image, string Country, string City, int StarRating, int ReviewCount, decimal ReviewScore, decimal PricePerNight)
+        private int ParseGuestCount(string guestText)
         {
-            // TODO: Save image to wwwroot/images or other folder
-            // TODO: Save hotel info to database or file
-
-            Console.WriteLine($"[Debug] Hotel: {City}, {Country} | Stars: {StarRating} | Score: {ReviewScore} | Reviews: {ReviewCount} | Price: {PricePerNight}");
-
-            return RedirectToAction("Index");
+            int count = 0;
+            foreach (var part in guestText.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var words = part.Trim().Split(' ');
+                if (words.Length >= 2 && int.TryParse(words[0], out int n))
+                {
+                    count += n;
+                }
+            }
+            return count == 0 ? 2 : count;
         }
 
-
-
-        public IActionResult Privacy()
+        private List<HotelResultViewModel> LoadAddedHotels()
         {
-            return View();
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Inventory.txt");
+            var results = new List<HotelResultViewModel>();
+            if (!System.IO.File.Exists(path)) return results;
+
+            foreach (var line in System.IO.File.ReadAllLines(path))
+            {
+                var parts = line.Split('|');
+                if (parts.Length >= 8)
+                {
+                    results.Add(new HotelResultViewModel
+                    {
+                        HotelName = parts[0],
+                        LocationName = $"{parts[2]}, {parts[1]}",
+                        StarRating = int.TryParse(parts[3], out var s) ? s : 0,
+                        ReviewCount = int.TryParse(parts[4], out var c) ? c : 0,
+                        ReviewScore = decimal.TryParse(parts[5], out var score) ? score : 0,
+                        ReviewScoreText = GetReviewText(score),
+                        PricePerNight = decimal.TryParse(parts[6], out var price) ? price : 0,
+                        ImageUrl = parts[7],
+                        CurrencySymbol = "BGN"
+                    });
+                }
+            }
+            return results;
         }
+
+        private string GetReviewText(decimal score)
+        {
+            if (score >= 9) return "Superb";
+            if (score >= 8) return "Very Good";
+            if (score >= 6) return "Good";
+            return "Okay";
+        }
+
+        private List<HotelResultViewModel> GetAllDummyHotels()
+        {
+            return new List<HotelResultViewModel>
+            {
+                new() {
+                    HotelName = "Pirin Golf Hotel & Spa",
+                    ImageUrl = "/pirinGolf.jpeg",
+                    StarRating = 5,
+                    LocationName = "Bansko",
+                    DistanceFromCenter = "6.7 km from downtown",
+                    ReviewScore = 8.0m,
+                    ReviewScoreText = "Very Good",
+                    ReviewCount = 716,
+                    PricePerNight = 577,
+                    CurrencySymbol = "BGN"
+                },
+                new() {
+                    HotelName = "Grand Hotel Bansko",
+                    ImageUrl = "/grandHotelBansko.jpg",
+                    StarRating = 4,
+                    LocationName = "Bansko",
+                    DistanceFromCenter = "1.2 km from downtown",
+                    ReviewScore = 7.5m,
+                    ReviewScoreText = "Good",
+                    ReviewCount = 1050,
+                    PricePerNight = 350,
+                    CurrencySymbol = "BGN"
+                },
+                new() {
+                    HotelName = "Kempinski Hotel Grand Arena",
+                    ImageUrl = "/Kempinski.jpg",
+                    StarRating = 5,
+                    LocationName = "Bansko",
+                    DistanceFromCenter = "Directly at Gondola",
+                    ReviewScore = 9.1m,
+                    ReviewScoreText = "Superb",
+                    ReviewCount = 880,
+                    PricePerNight = 720,
+                    CurrencySymbol = "BGN"
+                }
+            };
+        }
+
+        public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
