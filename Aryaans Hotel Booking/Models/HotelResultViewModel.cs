@@ -16,5 +16,8 @@ namespace Aryaans_Hotel_Booking.Models
         public string CurrencySymbol { get; set; } = "BGN";
         public string AvailabilityUrl { get; set; }
         public List<RoomInfoViewModel> RecommendedRooms { get; set; } = new List<RoomInfoViewModel>();
+
+        
+
     }
 }
