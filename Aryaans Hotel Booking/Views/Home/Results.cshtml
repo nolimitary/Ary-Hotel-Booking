@@ -24,8 +24,11 @@
     {
         <h2 class="mb-4" style="color: var(--ahb-light-text);">Showing hotels found for your search</h2>
         <p class="mb-4" style="color: var(--ahb-muted-text);">
-            Destination: @Model.SearchDestination | Dates: @Model.SearchDates | Guests: @Model.SearchGuests
+            Destination: @Model.SearchDestination |
+            Dates: @(string.IsNullOrWhiteSpace(Model.SearchDates) || Model.SearchDates == "Any" ? "Any" : Model.SearchDates) |
+            Guests: @(string.IsNullOrWhiteSpace(Model.SearchGuests) ? "Any" : Model.SearchGuests)
         </p>
+
 
 
         @foreach (var hotel in Model.Results)

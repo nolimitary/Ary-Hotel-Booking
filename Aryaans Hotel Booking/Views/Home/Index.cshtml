@@ -263,6 +263,10 @@
 
         <form asp-controller="Home" asp-action="SearchResults" method="get" class="hotel-search-form">
             <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
+            <input type="hidden" name="selectedDates" id="hidden-dates-input" value="@selectedDatesValue" />
+            <input type="hidden" name="selectedGuests" id="hidden-guests-input" value="@selectedGuestsValue" />
+
+            <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
 
             <div class="row g-2 justify-content-center align-items-center">
                 <div class="col-lg-3 col-md-6 col-12">
