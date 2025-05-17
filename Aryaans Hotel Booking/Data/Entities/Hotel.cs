@@ -1,15 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace Aryaans_Hotel_Booking.Data.Entities
 {
     public class Hotel
     {
-        [Key] 
+        [Key]
         public int Id { get; set; }
 
-        [Required] 
-        [StringLength(100)] 
+        [Required]
+        [StringLength(100)]
         public string Name { get; set; }
 
         [Required]
@@ -24,13 +25,14 @@ namespace Aryaans_Hotel_Booking.Data.Entities
         [Column(TypeName = "decimal(18, 2)")]
         public decimal PricePerNight { get; set; }
 
-        [Range(1, 5)] 
+        [Range(1, 5)]
         public int StarRating { get; set; }
 
         public double? ReviewScore { get; set; }
 
-        [StringLength(255)] 
+        [StringLength(255)]
         public string ImagePath { get; set; }
 
+        public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
     }
 }
