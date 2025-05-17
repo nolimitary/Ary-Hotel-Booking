@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Aryaans_Hotel_Booking.Data.Entities; 
 
 namespace Aryaans_Hotel_Booking.Data
 {
@@ -8,5 +9,8 @@ namespace Aryaans_Hotel_Booking.Data
             : base(options)
         {
         }
+
+        public DbSet<Hotel> Hotels { get; set; } 
+
     }
 }
