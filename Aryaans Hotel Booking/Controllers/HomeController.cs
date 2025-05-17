@@ -92,7 +92,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             }
 
             string virtualPath = $"/images/{fileName}";
-            string line = $"{City} Hotel|{Country}|{City}|{StarRating}|{ReviewCount}|{ReviewScore}|{PricePerNight}|{virtualPath}";
+            string line = $"{City} Hotel,{Country},{City},{PricePerNight},{StarRating},{ReviewScore},{virtualPath}"; // <--- CHANGED THIS LINE
 
             string dataPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "hotels.txt");
             System.IO.File.AppendAllLines(dataPath, new[] { line });
@@ -188,25 +188,33 @@ namespace Aryaans_Hotel_Booking.Controllers
 
             foreach (var line in System.IO.File.ReadAllLines(path))
             {
-                var parts = line.Split('|');
-                if (parts.Length >= 8)
+                if (string.IsNullOrWhiteSpace(line)) continue; 
+
+                var parts = line.Split(','); 
+                if (parts.Length >= 7)      
                 {
-                    decimal.TryParse(parts[5], out var score);
+                    bool priceParsed = decimal.TryParse(parts[3].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var price);
+                    bool starsParsed = int.TryParse(parts[4].Trim(), out var stars);
+                    bool scoreParsed = decimal.TryParse(parts[5].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var score);
+
                     results.Add(new HotelResultViewModel
                     {
-                        HotelName = parts[0],
-                        LocationName = $"{parts[2]}, {parts[1]}",
-                        StarRating = int.TryParse(parts[3], out var s) ? s : 0,
-                        ReviewCount = int.TryParse(parts[4], out var c) ? c : 0,
-                        ReviewScore = score,
-                        ReviewScoreText = GetReviewText(score),
-                        PricePerNight = decimal.TryParse(parts[6], out var price) ? price : 0,
-                        ImageUrl = parts[7],
-                        CurrencySymbol = "BGN"
+                        HotelName = parts[0].Trim(), 
+                        LocationName = $"{parts[2].Trim()}, {parts[1].Trim()}",
+                        StarRating = starsParsed ? stars : 0,                    
+                        ReviewCount = 0, 
+                        ReviewScore = scoreParsed ? score : 0m,                   
+                        ReviewScoreText = GetReviewText(scoreParsed ? score : 0m),
+                        PricePerNight = priceParsed ? price : 0m,                 
+                        ImageUrl = parts[6].Trim(),                              
+                        CurrencySymbol = "BGN" 
                     });
                 }
+                else
+                {
+                    _logger.LogWarning("Skipping malformed line in hotels.txt (not enough parts after splitting by comma): {Line}", line);
+                }
             }
-
             return results;
         }
 
