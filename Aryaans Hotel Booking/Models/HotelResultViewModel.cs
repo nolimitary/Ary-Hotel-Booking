@@ -4,6 +4,7 @@ namespace Aryaans_Hotel_Booking.Models
 {
     public class HotelResultViewModel
     {
+        public int Id { get; set; } 
         public string HotelName { get; set; }
         public string ImageUrl { get; set; }
         public int StarRating { get; set; }
@@ -16,8 +17,5 @@ namespace Aryaans_Hotel_Booking.Models
         public string CurrencySymbol { get; set; } = "BGN";
         public string AvailabilityUrl { get; set; }
         public List<RoomInfoViewModel> RecommendedRooms { get; set; } = new List<RoomInfoViewModel>();
-
-        
-
     }
 }

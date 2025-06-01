@@ -1,0 +1,81 @@
+﻿@model Aryaans_Hotel_Booking.Models.EditHotelViewModel
+@{
+    ViewData["Title"] = "Edit Hotel";
+}
+
+<link rel="stylesheet" href="~/css/add-hotel.css" asp-append-version="true" />
+<div class="container add-hotel-container">
+    <h2>@ViewData["Title"]: @Model.Name</h2>
+
+    <form asp-action="EditHotel" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ExistingImagePath" />
+
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-group">
+            <label asp-for="Name" class="control-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Country" class="control-label"></label>
+            <input asp-for="Country" class="form-control" />
+            <span asp-validation-for="Country" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="City" class="control-label"></label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="StarRating" class="control-label">Star Rating (1-5)</label>
+            <input asp-for="StarRating" class="form-control" type="number" min="1" max="5" />
+            <span asp-validation-for="StarRating" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="PricePerNight" class="control-label"></label>
+            <input asp-for="PricePerNight" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="PricePerNight" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="ReviewScore" class="control-label">Review Score (0.0-10.0)</label>
+            <input asp-for="ReviewScore" class="form-control" type="number" step="0.1" min="0" max="10" />
+            <span asp-validation-for="ReviewScore" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label">Current Hotel Image</label>
+            <div>
+                @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                {
+                    <img src="@Model.ExistingImagePath" alt="Current Hotel Image" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:10px;" />
+                }
+                else
+                {
+                    <p>No current image.</p>
+                }
+            </div>
+            <label for="Image" class="control-label">Upload New Image (Optional)</label>
+            <input type="file" name="Image" class="form-control-file" />
+        </div>
+
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-action="SearchResults" asp-route-destination="@Model.Country" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

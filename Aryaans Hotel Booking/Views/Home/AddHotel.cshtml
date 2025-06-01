@@ -1,83 +1,59 @@
 ﻿@{
     ViewData["Title"] = "Add New Hotel";
 }
-<link rel="stylesheet" href="~/css/add-hotel.css" asp-append-version="true" />
 
-<div class="add-hotel-container">
-    <h2>Add New Hotel</h2>
-    <form enctype="multipart/form-data" method="post" asp-action="AddHotel">
+<link rel="stylesheet" href="~/css/add-hotel.css" />
+
+<div class="container add-hotel-container">
+    <h2>@ViewData["Title"]</h2>
+
+    <form asp-action="AddHotel" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken() <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
         <div class="form-group">
-            <label>Country</label>
-            <input type="text" name="Country" required />
+            <label for="Name" class="control-label">Hotel Name</label>
+            <input type="text" name="Name" class="form-control" />
         </div>
 
         <div class="form-group">
-            <label>City</label>
-            <input type="text" name="City" required />
+            <label for="Country" class="control-label">Country</label>
+            <input type="text" name="Country" class="form-control" />
         </div>
 
         <div class="form-group">
-            <label>Star Rating</label>
-            <div class="star-rating" id="star-rating">
-                @for (int i = 1; i <= 5; i++)
-                {
-                    <span class="star" data-value="@i">&#9733;</span>
-                }
-            </div>
-            <input type="hidden" name="StarRating" id="StarRating" value="0" required />
-        </div>
-
-
-        <div class="form-group">
-            <label>Number of Reviews</label>
-            <input type="number" name="ReviewCount" min="0" required />
+            <label for="City" class="control-label">City</label>
+            <input type="text" name="City" class="form-control" />
         </div>
 
         <div class="form-group">
-            <label>Review Score (0.0 - 10.0)</label>
-            <input type="number" step="0.1" name="ReviewScore" min="0" max="10" required />
+            <label for="StarRating" class="control-label">Star Rating (1-5)</label>
+            <input type="number" name="StarRating" class="form-control" min="1" max="5" />
         </div>
 
         <div class="form-group">
-            <label>Price per Night</label>
-            <input type="number" step="0.01" name="PricePerNight" min="0" required />
+            <label for="PricePerNight" class="control-label">Price Per Night</label>
+            <input type="number" name="PricePerNight" class="form-control" step="0.01" />
         </div>
 
         <div class="form-group">
-            <label>Upload Hotel Picture</label>
-            <div class="dropzone" id="dropzone">
-                <span>Drag & Drop an image or click to upload</span>
-                <input type="file" name="Image" accept="image/*" required />
-            </div>
+            <label for="ReviewScore" class="control-label">Review Score (0.0-10.0)</label>
+            <input type="number" name="ReviewScore" class="form-control" step="0.1" min="0" max="10" />
         </div>
 
-        <button type="submit" class="submit-btn">Add Hotel</button>
+        <div class="form-group">
+            <label for="Image" class="control-label">Hotel Image</label>
+            <input type="file" name="Image" class="form-control-file" />
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Add Hotel</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const stars = document.querySelectorAll('.star-rating .star');
-        const hiddenInput = document.getElementById('StarRating');
 
-        stars.forEach((star, index) => {
-            star.addEventListener('mouseover', () => {
-                highlightStars(index + 1);
-            });
-
-            star.addEventListener('mouseout', () => {
-                highlightStars(parseInt(hiddenInput.value));
-            });
-
-            star.addEventListener('click', () => {
-                hiddenInput.value = star.dataset.value;
-                highlightStars(parseInt(star.dataset.value));
-            });
-        });
-
-        function highlightStars(rating) {
-            stars.forEach((s, i) => {
-                s.classList.toggle('selected', i < rating);
-            });
-        }
-    });
-</script>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

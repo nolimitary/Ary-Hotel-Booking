@@ -1,11 +1,7 @@
 ﻿@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
-@{
+@using Microsoft.AspNetCore.Http @{
     ViewData["Title"] = $"Hotels in {Model.SearchDestination}";
-    bool DebugMode = true; 
-
-
 }
-
 
 <link rel="stylesheet" href="~/css/search-results.css" asp-append-version="true" />
 
@@ -16,7 +12,6 @@
             <a asp-controller="Home" asp-action="AddHotel" class="btn" style="background-color: var(--ahb-primary-color); color: var(--ahb-dark-bg); font-weight: 600;">
                 ➕ Add Hotel
             </a>
-
         </div>
     }
 
@@ -29,13 +24,11 @@
             Guests: @(string.IsNullOrWhiteSpace(Model.SearchGuests) ? "Any" : Model.SearchGuests)
         </p>
 
-
-
         @foreach (var hotel in Model.Results)
         {
             <div class="hotel-result-card">
                 <div class="hotel-result-card__image">
-                    <img src="@hotel.ImageUrl" alt="@hotel.HotelName" loading="lazy" />
+                    <img src="@(hotel.ImageUrl ?? "/images/default-hotel.png")" alt="@hotel.HotelName" loading="lazy" />
                     <button class="hotel-result-card__fav-icon" aria-label="Add to favorites">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
                     </button>
@@ -88,14 +81,24 @@
                             <span class="hotel-result-card__price-info">Includes taxes and fees</span>
                         </div>
                         <a asp-controller="Home"
-                            asp-action="BookingDetails"
-                            asp-route-hotelName="@System.Net.WebUtility.UrlEncode(hotel.HotelName)"
-                            asp-route-selectedDates="@System.Net.WebUtility.UrlEncode(Model.SearchDates)"
-                            class="hotel-result-card__cta-button">
-                             Book Now
-                         </a>
+                           asp-action="BookingDetails"
+                           asp-route-hotelName="@System.Net.WebUtility.UrlEncode(hotel.HotelName)"
+                           asp-route-selectedDates="@System.Net.WebUtility.UrlEncode(Model.SearchDates)"
+                           class="hotel-result-card__cta-button">
+                            Book Now
+                        </a>
                     </div>
                 </div>
+                @if (Context.Session.GetString("Username") == "admin")
+                {
+                    <div class="hotel-result-card__admin-actions mt-2 text-end">
+                        <a asp-controller="Home" asp-action="EditHotel" asp-route-id="@hotel.Id" class="btn btn-sm" style="background-color: yellow; color: black; margin-right: 5px;">Edit</a>
+                        <form asp-controller="Home" asp-action="DeleteHotel" asp-route-id="@hotel.Id" method="post" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm" style="background-color: red; color: white;" onclick="return confirm('Are you sure you want to delete the hotel @hotel.HotelName?');">Remove</button>
+                        </form>
+                    </div>
+                }
             </div>
         }
     }
@@ -107,5 +110,4 @@
             <a asp-controller="Home" asp-action="Index" class="btn" style="background-color: var(--ahb-primary-color); color: var(--ahb-dark-bg); font-weight: 600;">Try a New Search</a>
         </div>
     }
-
 </div>
