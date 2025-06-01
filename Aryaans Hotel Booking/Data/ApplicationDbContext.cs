@@ -1,5 +1,7 @@
 ﻿using Aryaans_Hotel_Booking.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 
 namespace Aryaans_Hotel_Booking.Data
 {
@@ -13,6 +15,7 @@ namespace Aryaans_Hotel_Booking.Data
         public DbSet<Hotel> Hotels { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -34,26 +37,39 @@ namespace Aryaans_Hotel_Booking.Data
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(h => h.PricePerNight) // Hotel's own base PricePerNight
+                entity.Property(h => h.Address)
+                    .HasMaxLength(200);
+
+                entity.Property(h => h.Description)
+                    .HasMaxLength(1000);
+
+                entity.Property(h => h.PricePerNight)
                     .IsRequired()
                     .HasColumnType("decimal(18, 2)");
 
                 entity.Property(h => h.StarRating)
                     .IsRequired();
 
-                entity.Property(h => h.ReviewScore); // Nullable double
+                entity.Property(h => h.ReviewScore);
 
                 entity.Property(h => h.ImagePath)
                     .HasMaxLength(255);
+
+                entity.HasMany(h => h.Bookings)
+                      .WithOne(b => b.Hotel)
+                      .HasForeignKey(b => b.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasData(
                     new Hotel
                     {
                         Id = 1,
                         Name = "Grand Hyatt",
+                        Address = "123 Luxury Lane",
                         City = "New York",
                         Country = "USA",
-                        PricePerNight = 300.00m, // Example base price for hotel
+                        Description = "A luxurious hotel in the heart of the city.",
+                        PricePerNight = 300.00m,
                         StarRating = 5,
                         ReviewScore = 8.8,
                         ImagePath = "/images/hotels/grand_hyatt.jpg"
@@ -62,9 +78,11 @@ namespace Aryaans_Hotel_Booking.Data
                     {
                         Id = 2,
                         Name = "The Plaza",
+                        Address = "768 Fifth Avenue",
                         City = "New York",
                         Country = "USA",
-                        PricePerNight = 500.00m, // Example base price for hotel
+                        Description = "Iconic luxury hotel with a rich history.",
+                        PricePerNight = 500.00m,
                         StarRating = 5,
                         ReviewScore = 9.2,
                         ImagePath = "/images/hotels/the_plaza.jpg"
@@ -76,6 +94,8 @@ namespace Aryaans_Hotel_Booking.Data
             {
                 entity.HasKey(r => r.Id);
 
+                entity.Property(r => r.RoomNumber);
+
                 entity.Property(r => r.RoomType)
                     .IsRequired()
                     .HasMaxLength(50);
@@ -83,12 +103,16 @@ namespace Aryaans_Hotel_Booking.Data
                 entity.Property(r => r.Description)
                     .HasMaxLength(200);
 
-                entity.Property(r => r.PricePerNight) // Room's specific price
+                entity.Property(r => r.PricePerNight)
                     .IsRequired()
                     .HasColumnType("decimal(18, 2)");
 
                 entity.Property(r => r.Capacity)
-                    .IsRequired(); // Range(1,10) implies required
+                    .IsRequired();
+
+                entity.Property(r => r.IsAvailable);
+                entity.Property(r => r.Amenities);
+
 
                 entity.HasOne(r => r.Hotel)
                       .WithMany(h => h.Rooms)
@@ -100,28 +124,37 @@ namespace Aryaans_Hotel_Booking.Data
                     {
                         Id = 1,
                         HotelId = 1,
+                        RoomNumber = "101",
                         RoomType = "Deluxe King",
                         Description = "Spacious room with a king-sized bed and city view.",
                         PricePerNight = 450.00m,
-                        Capacity = 2
+                        Capacity = 2,
+                        IsAvailable = true,
+                        Amenities = "WiFi, TV, AC, Minibar"
                     },
                     new Room
                     {
                         Id = 2,
                         HotelId = 1,
+                        RoomNumber = "102",
                         RoomType = "Standard Queen",
                         Description = "Comfortable room with a queen-sized bed.",
                         PricePerNight = 350.00m,
-                        Capacity = 2
+                        Capacity = 2,
+                        IsAvailable = false,
+                        Amenities = "WiFi, TV, AC"
                     },
                     new Room
                     {
                         Id = 3,
                         HotelId = 2,
+                        RoomNumber = "201",
                         RoomType = "Plaza Suite",
                         Description = "Luxurious suite with a separate living area and premium amenities.",
                         PricePerNight = 799.99m,
-                        Capacity = 4
+                        Capacity = 4,
+                        IsAvailable = true,
+                        Amenities = "WiFi, TV, AC, Minibar, Jacuzzi"
                     }
                 );
             });
@@ -134,6 +167,21 @@ namespace Aryaans_Hotel_Booking.Data
                 entity.Property(u => u.Username).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
                 entity.Property(u => u.PasswordHash).IsRequired();
+
+                entity.HasMany(u => u.Bookings)
+                      .WithOne(b => b.User)
+                      .HasForeignKey(b => b.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Booking>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+                entity.Property(b => b.CheckInDate).IsRequired();
+                entity.Property(b => b.CheckOutDate).IsRequired();
+                entity.Property(b => b.NumberOfGuests).IsRequired();
+                entity.Property(b => b.TotalPrice).IsRequired().HasColumnType("decimal(18,2)");
+                entity.Property(b => b.BookingDate).IsRequired();
             });
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic; // Required for ICollection
+using System.ComponentModel.DataAnnotations;
 
 namespace Aryaans_Hotel_Booking.Data.Entities
 {
@@ -12,10 +13,12 @@ namespace Aryaans_Hotel_Booking.Data.Entities
 
         [Required]
         [MaxLength(255)]
-        [EmailAddress]
+        [EmailAddress] 
         public string Email { get; set; }
 
         [Required]
         public string PasswordHash { get; set; }
+
+        public virtual ICollection<Booking> Bookings { get; set; } = new HashSet<Booking>();
     }
 }

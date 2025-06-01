@@ -9,16 +9,17 @@ namespace Aryaans_Hotel_Booking.Data
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
+
             IConfigurationRoot configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json") 
+                .SetBasePath(Directory.GetCurrentDirectory()) 
+                .AddJsonFile("appsettings.json")
                 .Build();
 
             var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            builder.UseSqlite(connectionString);
+            builder.UseSqlServer(connectionString); 
 
             return new ApplicationDbContext(builder.Options);
         }

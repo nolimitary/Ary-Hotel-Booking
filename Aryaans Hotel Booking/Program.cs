@@ -1,26 +1,27 @@
 using Microsoft.EntityFrameworkCore;
 using Aryaans_Hotel_Booking.Data;
-using Aryaans_Hotel_Booking.Services; 
-using Microsoft.AspNetCore.Hosting;   
-using Microsoft.Extensions.DependencyInjection; 
-using Microsoft.Extensions.Logging; 
+using Aryaans_Hotel_Booking.Services;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))); 
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDistributedMemoryCache(); 
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); 
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true; 
+    options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -32,12 +33,13 @@ using (var scope = app.Services.CreateScope())
         var webHostEnvironment = services.GetRequiredService<IWebHostEnvironment>();
 
         logger.LogInformation("Applying database migrations if any...");
+
         await context.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied (or database up-to-date).");
 
-        logger.LogInformation("Attempting to seed hotel data...");
+        logger.LogInformation("Attempting to seed hotel data via HotelDataSeeder...");
         await HotelDataSeeder.SeedHotelsAsync(context, webHostEnvironment);
-        logger.LogInformation("Hotel data seeding process completed.");
+        logger.LogInformation("Hotel data seeding process via HotelDataSeeder completed.");
     }
     catch (Exception ex)
     {
@@ -56,7 +58,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseSession(); 
+app.UseSession();
 
 app.UseAuthorization();
 

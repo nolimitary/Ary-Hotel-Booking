@@ -538,5 +538,84 @@ namespace Aryaans_Hotel_Booking.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteHotel(int? id)
+        {
+            if (HttpContext.Session.GetString("Username") != "admin")
+            {
+                TempData["ErrorMessage"] = "You are not authorized to delete hotels.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (id == null)
+            {
+                _logger.LogWarning("DeleteHotel GET called with null ID.");
+                TempData["ErrorMessage"] = "Hotel ID not provided.";
+                return NotFound("Hotel ID not provided.");
+            }
+
+            var hotel = await _context.Hotels
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (hotel == null)
+            {
+                _logger.LogWarning($"DeleteHotel GET: Hotel with ID {id} not found.");
+                TempData["ErrorMessage"] = $"Hotel with ID {id} not found.";
+                return NotFound($"Hotel with ID {id} not found.");
+            }
+
+            _logger.LogInformation($"Displaying delete confirmation for Hotel ID {id}, Name: {hotel.Name}.");
+            return View(hotel);
+        }
+
+        [HttpPost, ActionName("DeleteHotel")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteHotelConfirmed(int id)
+        {
+            if (HttpContext.Session.GetString("Username") != "admin")
+            {
+                TempData["ErrorMessage"] = "You are not authorized to delete hotels.";
+                _logger.LogWarning("Unauthorized attempt to POST DeleteHotelConfirmed.");
+                return RedirectToAction(nameof(Index));
+            }
+
+            var hotel = await _context.Hotels.FindAsync(id);
+            if (hotel == null)
+            {
+                _logger.LogWarning($"DeleteHotel POST: Hotel with ID {id} not found for deletion.");
+                TempData["ErrorMessage"] = $"Hotel with ID {id} not found.";
+                return NotFound($"Hotel with ID {id} not found.");
+            }
+
+            try
+            {
+                var bookingsExist = await _context.Bookings.AnyAsync(b => b.HotelId == id);
+                if (bookingsExist)
+                {
+                    _logger.LogWarning($"Attempt to delete Hotel ID {id} which has existing bookings.");
+                    TempData["ErrorMessage"] = "Cannot delete this hotel as it has existing bookings. Please remove associated bookings first.";
+                    return RedirectToAction(nameof(DeleteHotel), new { id = id });
+                }
+
+                _context.Hotels.Remove(hotel);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Hotel ID {id}, Name: {hotel.Name} deleted successfully.");
+                TempData["SuccessMessage"] = $"Hotel '{hotel.Name}' was successfully deleted.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, $"Error deleting Hotel ID {id}, Name: {hotel.Name}. It might be in use.");
+                TempData["ErrorMessage"] = $"Error deleting hotel '{hotel.Name}'. It might be referenced by other records.";
+                return View("DeleteHotel", hotel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unexpected error deleting Hotel ID {id}, Name: {hotel.Name}.");
+                TempData["ErrorMessage"] = "An unexpected error occurred while deleting the hotel.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
     }
 }
