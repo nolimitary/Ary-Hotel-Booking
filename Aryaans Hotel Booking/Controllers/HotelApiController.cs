@@ -1,15 +1,15 @@
 ﻿using Aryaans_Hotel_Booking.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq; 
-using System.Threading.Tasks; 
+using System.Linq;
+using System.Threading.Tasks;
 using Aryaans_Hotel_Booking.Data.Entities;
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
-    [Route("api/[controller]")] 
+    [Route("api/[controller]")]
     [ApiController]
     public class HotelApiController : ControllerBase
     {
@@ -23,6 +23,7 @@ namespace Aryaans_Hotel_Booking.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)] // Cache for 600 seconds (10 minutes)
         public async Task<ActionResult<IEnumerable<Hotel>>> GetHotels()
         {
             _logger.LogInformation("API: GetHotels called.");
@@ -44,6 +45,7 @@ namespace Aryaans_Hotel_Booking.Controllers
         }
 
         [HttpGet("{id}")]
+        [ResponseCache(Duration = 1200, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new string[] { "id" })] // Cache specific hotel for 20 minutes
         public async Task<ActionResult<Hotel>> GetHotel(int id)
         {
             _logger.LogInformation($"API: GetHotel called with ID: {id}.");
@@ -65,7 +67,5 @@ namespace Aryaans_Hotel_Booking.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
             }
         }
-
-
     }
 }

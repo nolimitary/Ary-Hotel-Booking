@@ -8,11 +8,12 @@ using Microsoft.Extensions.Logging;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))); 
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDistributedMemoryCache();
+builder.Services.AddDistributedMemoryCache(); 
+builder.Services.AddResponseCaching();     
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -21,7 +22,6 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
-
 
 using (var scope = app.Services.CreateScope())
 {
@@ -33,7 +33,6 @@ using (var scope = app.Services.CreateScope())
         var webHostEnvironment = services.GetRequiredService<IWebHostEnvironment>();
 
         logger.LogInformation("Applying database migrations if any...");
-
         await context.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied (or database up-to-date).");
 
@@ -58,8 +57,11 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseResponseCaching();
+
 app.UseSession();
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(
