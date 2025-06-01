@@ -1,11 +1,7 @@
 ﻿@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
 @{
     ViewData["Title"] = "Hotel Search Results";
-    if (!string.IsNullOrEmpty(Model.SearchDestination))
-    {
-        ViewData["Title"] = $"Hotels in {Model.SearchDestination}";
-    }
-
+    if (!string.IsNullOrEmpty(Model.SearchDestination)) { ViewData["Title"] = $"Hotels in {Model.SearchDestination}"; }
     string GetSortIndicator(string fieldName)
     {
         if (Model.CurrentSortField?.Equals(fieldName, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -20,20 +16,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <style>
         .sort-controls-wrapper {
-            background-color: rgba(0,0,0,0.1); /* Subtle background for the sort bar */
+            background-color: rgba(0,0,0,0.1);
             padding: 10px 15px;
             border-radius: 5px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
-            gap: 10px; /* Spacing between items */
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
             .sort-controls-wrapper .sort-label {
                 color: var(--ahb-muted-text, #b3c2cc);
                 font-weight: 500;
-                margin-right: 5px; /* Space after 'Sort by:' */
+                margin-right: 5px;
             }
 
         .sort-link {
@@ -46,7 +42,7 @@
         }
 
             .sort-link:hover, .sort-link:focus {
-                color: #121212; /* Dark text on hover for primary color */
+                color: #121212;
                 background-color: var(--ahb-primary-color, #74e5b2);
                 text-decoration: none;
             }
@@ -60,34 +56,34 @@
         .active-sort {
             font-weight: 700;
             background-color: var(--ahb-primary-color, #74e5b2);
-            color: #121212 !important; /* Dark text for active sort link */
+            color: #121212 !important;
         }
 
             .active-sort .sort-indicator {
-                color: #121212; /* Dark indicator on active sort */
+                color: #121212;
             }
 
         .pagination .page-link {
             color: var(--ahb-primary-color, #74e5b2);
-            background-color: transparent; /* Fit dark theme */
+            background-color: transparent;
             border-color: var(--ahb-primary-color, #74e5b2);
         }
 
             .pagination .page-link:hover {
                 background-color: var(--ahb-primary-color, #74e5b2);
-                color: #121212; /* Dark text on hover */
+                color: #121212;
             }
 
         .pagination .page-item.active .page-link {
             background-color: var(--ahb-primary-color, #74e5b2);
             border-color: var(--ahb-primary-color, #74e5b2);
-            color: #121212; /* Dark text for active page */
+            color: #121212;
         }
 
         .pagination .page-item.disabled .page-link {
             color: var(--ahb-muted-text, #6c757d);
             background-color: transparent;
-            border-color: #444; /* Darker border for disabled */
+            border-color: #444;
         }
 
         .search-params-display {
@@ -97,6 +93,19 @@
 
             .search-params-display strong {
                 color: var(--ahb-light-text, #f1f3f5);
+            }
+
+        .active-filters-display {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--ahb-muted-text);
+        }
+
+            .active-filters-display strong {
+                color: var(--ahb-light-text);
             }
     </style>
 }
@@ -119,46 +128,54 @@
         }
     </div>
 
+    <div class="active-filters-display">
+        <strong>Active Filters:</strong>
+        @if (Model.MinRating.HasValue)
+        {
+            <span>Min Rating: @Model.MinRating+ stars |</span>
+        }
+        @if (Model.MinPrice.HasValue)
+        {
+            <span>Min Price: $@Model.MinPrice |</span>
+        }
+        @if (Model.MaxPrice.HasValue)
+        {
+            <span>Max Price: $@Model.MaxPrice |</span>
+        }
+        @if (!Model.MinRating.HasValue && !Model.MinPrice.HasValue && !Model.MaxPrice.HasValue)
+        {
+            <span>None</span>
+        }
+    </div>
+
     <div class="sort-controls-wrapper">
         <span class="sort-label">Sort by:</span>
         <a class="sort-link @((Model.CurrentSortField?.Equals("name", StringComparison.OrdinalIgnoreCase) ?? true) ? "active-sort" : "")"
            asp-action="SearchResults"
-           asp-route-destination="@Model.SearchDestination"
-           asp-route-selectedDates="@Model.SearchDates"
-           asp-route-selectedGuests="@Model.SearchGuests"
-           asp-route-sortBy="name"
-           asp-route-sortOrder="@Model.GetOppositeSortOrder("name")"
-           asp-route-pageNumber="1">
+           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+           asp-route-sortBy="name" asp-route-sortOrder="@Model.GetOppositeSortOrder("name")" asp-route-pageNumber="1">
             Name <span class="sort-indicator">@GetSortIndicator("name")</span>
         </a>
         <a class="sort-link @(Model.CurrentSortField?.Equals("price", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
            asp-action="SearchResults"
-           asp-route-destination="@Model.SearchDestination"
-           asp-route-selectedDates="@Model.SearchDates"
-           asp-route-selectedGuests="@Model.SearchGuests"
-           asp-route-sortBy="price"
-           asp-route-sortOrder="@Model.GetOppositeSortOrder("price")"
-           asp-route-pageNumber="1">
+           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+           asp-route-sortBy="price" asp-route-sortOrder="@Model.GetOppositeSortOrder("price")" asp-route-pageNumber="1">
             Price <span class="sort-indicator">@GetSortIndicator("price")</span>
         </a>
         <a class="sort-link @(Model.CurrentSortField?.Equals("rating", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
            asp-action="SearchResults"
-           asp-route-destination="@Model.SearchDestination"
-           asp-route-selectedDates="@Model.SearchDates"
-           asp-route-selectedGuests="@Model.SearchGuests"
-           asp-route-sortBy="rating"
-           asp-route-sortOrder="@Model.GetOppositeSortOrder("rating")"
-           asp-route-pageNumber="1">
+           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+           asp-route-sortBy="rating" asp-route-sortOrder="@Model.GetOppositeSortOrder("rating")" asp-route-pageNumber="1">
             Rating <span class="sort-indicator">@GetSortIndicator("rating")</span>
         </a>
         <a class="sort-link @(Model.CurrentSortField?.Equals("score", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
            asp-action="SearchResults"
-           asp-route-destination="@Model.SearchDestination"
-           asp-route-selectedDates="@Model.SearchDates"
-           asp-route-selectedGuests="@Model.SearchGuests"
-           asp-route-sortBy="score"
-           asp-route-sortOrder="@Model.GetOppositeSortOrder("score")"
-           asp-route-pageNumber="1">
+           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+           asp-route-sortBy="score" asp-route-sortOrder="@Model.GetOppositeSortOrder("score")" asp-route-pageNumber="1">
             Review Score <span class="sort-indicator">@GetSortIndicator("score")</span>
         </a>
     </div>
@@ -168,16 +185,12 @@
         {
             foreach (var hotel in Model.Results)
             {
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <partial name="_HotelCard" model="hotel" />
-                </div>
+                <div class="col-md-6 col-lg-4 mb-4"> <partial name="_HotelCard" model="hotel" /> </div>
             }
         }
         else
         {
-            <div class="col">
-                <p style="color: var(--ahb-muted-text, #b3c2cc);">No hotels found matching your criteria.</p>
-            </div>
+            <div class="col"> <p style="color: var(--ahb-muted-text, #b3c2cc);">No hotels found matching your criteria.</p> </div>
         }
     </div>
 
@@ -189,38 +202,30 @@
                 {
                     <li class="page-item">
                         <a class="page-link" asp-action="SearchResults"
-                           asp-route-destination="@Model.SearchDestination"
-                           asp-route-selectedDates="@Model.SearchDates"
-                           asp-route-selectedGuests="@Model.SearchGuests"
-                           asp-route-sortBy="@Model.CurrentSortField"
-                           asp-route-sortOrder="@Model.CurrentSortOrder"
+                           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                           asp-route-sortBy="@Model.CurrentSortField" asp-route-sortOrder="@Model.CurrentSortOrder"
                            asp-route-pageNumber="@(Model.CurrentPage - 1)">Previous</a>
                     </li>
                 }
                 else
                 {
-                    <li class="page-item disabled">
-                        <span class="page-link">Previous</span>
-                    </li>
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
                 }
 
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     if (i == Model.CurrentPage)
                     {
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">@i</span>
-                        </li>
+                        <li class="page-item active" aria-current="page"><span class="page-link">@i</span></li>
                     }
                     else if (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2 || i == 1 || i == Model.TotalPages)
                     {
                         <li class="page-item">
                             <a class="page-link" asp-action="SearchResults"
-                               asp-route-destination="@Model.SearchDestination"
-                               asp-route-selectedDates="@Model.SearchDates"
-                               asp-route-selectedGuests="@Model.SearchGuests"
-                               asp-route-sortBy="@Model.CurrentSortField"
-                               asp-route-sortOrder="@Model.CurrentSortOrder"
+                               asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+                               asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                               asp-route-sortBy="@Model.CurrentSortField" asp-route-sortOrder="@Model.CurrentSortOrder"
                                asp-route-pageNumber="@i">@i</a>
                         </li>
                     }
@@ -234,19 +239,15 @@
                 {
                     <li class="page-item">
                         <a class="page-link" asp-action="SearchResults"
-                           asp-route-destination="@Model.SearchDestination"
-                           asp-route-selectedDates="@Model.SearchDates"
-                           asp-route-selectedGuests="@Model.SearchGuests"
-                           asp-route-sortBy="@Model.CurrentSortField"
-                           asp-route-sortOrder="@Model.CurrentSortOrder"
+                           asp-route-destination="@Model.SearchDestination" asp-route-selectedDates="@Model.SearchDates" asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-minRating="@Model.MinRating" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                           asp-route-sortBy="@Model.CurrentSortField" asp-route-sortOrder="@Model.CurrentSortOrder"
                            asp-route-pageNumber="@(Model.CurrentPage + 1)">Next</a>
                     </li>
                 }
                 else
                 {
-                    <li class="page-item disabled">
-                        <span class="page-link">Next</span>
-                    </li>
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
                 }
             </ul>
         </nav>

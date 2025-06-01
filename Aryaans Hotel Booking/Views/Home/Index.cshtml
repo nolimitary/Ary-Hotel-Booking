@@ -1,17 +1,14 @@
 ﻿@model IEnumerable<Aryaans_Hotel_Booking.Models.HotelResultViewModel>
 @{
     ViewData["Title"] = "Welcome to Aryaan's Hotel Booking";
-
     var selectedDatesValue = ViewData["SelectedDates"] as string;
     bool hasSelectedDates = !string.IsNullOrEmpty(selectedDatesValue);
-
     var selectedGuestsValue = ViewData["SelectedGuests"] as string;
     bool hasSelectedGuests = !string.IsNullOrEmpty(selectedGuestsValue);
-
     var selectedLocationValue = ViewData["SelectedLocation"] as string;
     bool hasSelectedLocation = !string.IsNullOrEmpty(selectedLocationValue);
 
-    Func<string?, string?, string?, string> BuildQueryParams =
+    Func<string?, string?, string?, string> BuildPickerQueryParams =
         (dates, guests, location) =>
         {
             var query = new System.Text.StringBuilder();
@@ -32,17 +29,19 @@
             --ahb-muted-text: #b3c2cc;
             --ahb-button-glow: rgba(116, 229, 178, 0.3);
             --ahb-form-element-height: 52px;
+            --ahb-dark-bg-input: rgba(255, 255, 255, 0.1);
+            --ahb-dark-bg-input-focus: rgba(255, 255, 255, 0.15);
+            --ahb-input-border: rgba(255, 255, 255, 0.2);
         }
 
-        /* Styles from your original Index.cshtml for Hero Section */
         .hero-section {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 92vh;
-            padding: 4rem 1rem;
-            background: url('/images/hero-background.jpg') center center / cover no-repeat; /* Ensure this image exists */
+            padding: 2rem 1rem; /* Reduced padding slightly */
+            background: url('/images/hero-background.jpg') center center / cover no-repeat;
             color: var(--ahb-light-text);
             text-align: center;
         }
@@ -50,14 +49,14 @@
         .hero-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.75));
+            background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.75));
             z-index: 1;
         }
 
         .hero-content {
             position: relative;
             z-index: 2;
-            max-width: 900px;
+            max-width: 1000px; /* Wider for more filters */
             margin: 0 auto;
             animation: fadeUp 1s ease-out forwards;
             opacity: 0;
@@ -76,113 +75,117 @@
         }
 
         .hero-title {
-            font-size: 3.2rem;
+            font-size: 3rem;
             font-weight: 700;
             margin-bottom: 1rem;
             color: var(--ahb-light-text);
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
         }
 
         .hero-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 300;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
             color: var(--ahb-muted-text);
         }
 
-        .hotel-search-form .form-control {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .hotel-search-form .form-control, .hotel-search-form .form-select {
+            background-color: var(--ahb-dark-bg-input);
+            border: 1px solid var(--ahb-input-border);
             color: var(--ahb-light-text);
-            padding: 0.95rem 1rem;
+            padding: 0.75rem 1rem; /* Adjusted padding */
             border-radius: 8px;
             transition: all 0.2s ease-in-out;
-            font-size: 0.95rem;
-            height: var(--ahb-form-element-height);
-            line-height: normal; /* Ensure vertical alignment */
+            font-size: 0.9rem;
+            height: calc(var(--ahb-form-element-height) - 8px); /* Adjusted height */
+            line-height: normal;
             width: 100%;
             box-sizing: border-box;
         }
 
-            .hotel-search-form .form-control::placeholder {
+            .hotel-search-form .form-control::placeholder, .hotel-search-form .form-select {
                 color: var(--ahb-muted-text);
                 opacity: 1;
             }
 
-            .hotel-search-form .form-control:focus {
-                background-color: rgba(255, 255, 255, 0.15);
-                border-color: var(--ahb-primary-color);
-                outline: none;
-                box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
-            }
+                .hotel-search-form .form-control:focus, .hotel-search-form .form-select:focus {
+                    background-color: var(--ahb-dark-bg-input-focus);
+                    border-color: var(--ahb-primary-color);
+                    outline: none;
+                    box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
+                }
 
-        .ahb-datepicker-button, .ahb-guestpicker-button, .ahb-locationpicker-button {
-            display: flex; /* This makes it behave like a block for alignment */
+                .hotel-search-form .form-select option {
+                    background-color: #2c2c2c;
+                    color: var(--ahb-light-text);
+                }
+        /* Style for dropdown options */
+
+        .ahb-picker-button {
+            display: flex;
             align-items: center;
             justify-content: flex-start;
             gap: 0.5rem;
             text-decoration: none;
             cursor: pointer;
             color: var(--ahb-light-text);
-            /* These are also .form-control, so they inherit height, padding etc. */
+            /* Inherits .form-control styles when applied */
         }
 
-            .ahb-datepicker-button .placeholder-text, .ahb-guestpicker-button .placeholder-text, .ahb-locationpicker-button .placeholder-text {
+            .ahb-picker-button .placeholder-text {
                 color: var(--ahb-muted-text);
             }
 
-            .ahb-datepicker-button:hover, .ahb-guestpicker-button:hover, .ahb-locationpicker-button:hover {
-                background-color: rgba(255, 255, 255, 0.15); /* from .form-control:focus */
-                border-color: var(--ahb-primary-color); /* from .form-control:focus */
+            .ahb-picker-button:hover, .ahb-picker-button:focus {
+                background-color: var(--ahb-dark-bg-input-focus);
+                border-color: var(--ahb-primary-color);
                 color: var(--ahb-primary-color);
                 text-decoration: none;
-                box-shadow: 0 0 0 0.2rem var(--ahb-button-glow); /* from .form-control:focus */
+                box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
             }
 
-                .ahb-datepicker-button:hover .placeholder-text, .ahb-guestpicker-button:hover .placeholder-text, .ahb-locationpicker-button:hover .placeholder-text {
+                .ahb-picker-button:hover .placeholder-text {
                     color: var(--ahb-primary-color);
                 }
 
-            .ahb-datepicker-button .icon, .ahb-guestpicker-button .icon, .ahb-locationpicker-button .icon {
-                width: 18px;
-                height: 18px;
+            .ahb-picker-button .icon {
+                width: 16px;
+                height: 16px;
                 fill: currentColor;
                 flex-shrink: 0;
                 opacity: 0.8;
                 transition: opacity 0.2s ease-in-out;
             }
 
-            .ahb-datepicker-button:hover .icon, .ahb-guestpicker-button:hover .icon, .ahb-locationpicker-button:hover .icon {
+            .ahb-picker-button:hover .icon {
                 opacity: 1;
             }
 
-        /* Ensure .animated-button styles are complete and correct */
         .animated-button {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px; /* Reduced gap for better alignment with text */
-            padding: 0.65rem 1.5rem; /* Adjust padding as needed */
+            gap: 4px;
+            padding: 0.65rem 1.5rem;
             border: 2px solid transparent;
-            font-size: 0.95rem;
-            background-color: inherit; /* Should be transparent for hero */
+            font-size: 0.9rem;
+            background-color: inherit;
             border-radius: 100px;
             font-weight: 600;
             color: var(--ahb-primary-color);
             box-shadow: 0 0 0 1.5px var(--ahb-primary-color);
-            height: var(--ahb-form-element-height);
+            height: calc(var(--ahb-form-element-height) - 8px);
             width: 100%;
             transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
             overflow: hidden;
             cursor: pointer;
             text-decoration: none;
-            line-height: normal; /* Added for vertical centering of text */
         }
 
             .animated-button svg {
                 position: absolute;
-                width: 24px;
+                width: 22px;
                 fill: var(--ahb-primary-color);
                 z-index: 9;
                 transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
@@ -212,14 +215,14 @@
             .animated-button .text {
                 position: relative;
                 z-index: 1;
-                transform: translateX(-12px); /* Adjust as needed for centering */
+                transform: translateX(-10px);
                 transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
             }
 
             .animated-button:hover {
-                box-shadow: 0 0 0 12px transparent; /* Original style */
-                color: #212121; /* Text color on hover */
-                border-radius: 12px; /* Original style */
+                box-shadow: 0 0 0 12px transparent;
+                color: #121212;
+                border-radius: 12px;
             }
 
                 .animated-button:hover .arr-1 {
@@ -231,38 +234,41 @@
                 }
 
                 .animated-button:hover .text {
-                    transform: translateX(12px); /* Adjust as needed */
+                    transform: translateX(10px);
                 }
 
                 .animated-button:hover svg {
-                    fill: #212121; /* Arrow color on hover */
+                    fill: #121212;
                 }
 
                 .animated-button:hover .circle {
-                    width: 220px; /* Expands to fill button */
-                    height: 220px; /* Expands to fill button */
+                    width: 100%;
+                    height: 100%;
                     opacity: 1;
                 }
+            /* Adjusted fill effect */
+            .animated-button:active {
+                scale: 0.95;
+                box-shadow: 0 0 0 4px var(--ahb-primary-color);
+            }
 
-            .animated-button:disabled { /* Style for disabled button */
-                background-color: rgba(116, 229, 178, 0.3); /* Semi-transparent primary color */
-                color: rgba(241, 243, 245, 0.7); /* Lighter text */
-                box-shadow: 0 0 0 1.5px rgba(116, 229, 178, 0.5);
+            .animated-button:disabled {
+                background-color: rgba(116, 229, 178, 0.1);
+                color: rgba(241, 243, 245, 0.5);
+                box-shadow: 0 0 0 1.5px rgba(116, 229, 178, 0.3);
                 cursor: not-allowed;
             }
 
-                .animated-button:disabled:hover .circle { /* Prevent hover animation on disabled */
-                    width: 20px;
-                    height: 20px;
+                .animated-button:disabled:hover .circle {
                     opacity: 0;
                 }
-
+                /* Prevent hover effect on disabled */
                 .animated-button:disabled:hover .text {
-                    transform: translateX(-12px);
+                    transform: translateX(-10px);
                 }
 
                 .animated-button:disabled:hover svg {
-                    fill: var(--ahb-primary-color); /* Keep original arrow color or make it muted */
+                    fill: var(--ahb-primary-color);
                 }
 
                 .animated-button:disabled:hover .arr-1 {
@@ -273,73 +279,47 @@
                     left: -25%;
                 }
 
-
-        .button-right-nudge {
-            /* margin-left: 12px; original, check if still needed with col-lg-2 grid */
-        }
-
-        a.form-control { /* For the picker links that are also form-controls */
+        .filter-group {
+            margin-bottom: 0.75rem;
             text-align: left;
-            line-height: 1.5; /* Original for text alignment */
         }
 
-        /* Styles for the new Featured Hotels section */
+            .filter-group label {
+                font-size: 0.85rem;
+                color: var(--ahb-muted-text);
+                margin-bottom: 0.25rem;
+                display: block;
+            }
+
         .featured-hotels-section {
-            padding: 3rem 1rem; /* Adjusted padding */
-            background-color: #ffffff; /* Changed to white as per your image, or choose a very light grey like #f8f9fa if preferred for contrast */
-            color: #333; /* Default text color for this section */
+            padding: 3rem 1rem;
+            background-color: #171717; /* Darker bg for contrast with cards */
         }
 
             .featured-hotels-section h2 {
                 text-align: center;
                 margin-bottom: 2.5rem;
-                font-weight: 600; /* Slightly less heavy */
-                color: #2c3e50; /* Darker, more standard heading color */
+                font-weight: 600;
+                color: var(--ahb-light-text);
                 font-size: 2rem;
             }
-
-        /* Ensure Bootstrap's card styles are not being overly reset by global styles.
-                   The _HotelCard.cshtml mostly uses Bootstrap classes. If Bootstrap CSS is linked
-                   correctly in _Layout.cshtml, the cards should have a default look.
-                   If they are still "all white", it implies Bootstrap might not be loading
-                   or its styles are being heavily counteracted by other CSS.
-                */
-
-        /* Example: Minor enhancement to card if needed, but Bootstrap should handle most of it */
-        .card {
-            border: 1px solid #e9ecef; /* Default Bootstrap card border is often subtle */
-        }
-
-            .card .card-title {
-                color: #343a40; /* Ensure card titles have good color */
-            }
-
-            .card .badge { /* Ensure badges have clear text */
-                color: #212529; /* For light backgrounds */
-            }
-
-                .card .badge.bg-success, .card .badge.bg-primary { /* For dark backgrounds */
-                    color: #fff;
-                }
-
     </style>
 }
 
 <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="hero-content container">
-        <h1 class="hero-title">Luxury Hotels, Tailored For You</h1>
-        <p class="hero-subtitle">Plan your next escape with Aryaan’s Hotel Booking — elegance redefined.</p>
+        <h1 class="hero-title">Find Your Perfect Stay</h1>
+        <p class="hero-subtitle">Discover exceptional hotels tailored to your preferences.</p>
 
         <form asp-controller="Home" asp-action="SearchResults" method="get" class="hotel-search-form">
-            <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
             <input type="hidden" name="selectedDates" id="hidden-dates-input" value="@selectedDatesValue" />
             <input type="hidden" name="selectedGuests" id="hidden-guests-input" value="@selectedGuestsValue" />
 
-            <div class="row g-2 justify-content-center align-items-center">
-                <div class="col-lg-3 col-md-6 col-12">
-                    <a href="/Home/DestinationPicker@(BuildQueryParams(selectedDatesValue, selectedGuestsValue, null))"
-                       class="form-control ahb-locationpicker-button">
+            <div class="row g-2 mb-3 align-items-stretch">
+                <div class="col-lg col-md-6 col-12">
+                    <a href="/Home/DestinationPicker@(BuildPickerQueryParams(selectedDatesValue, selectedGuestsValue, null))"
+                       class="form-control ahb-picker-button" id="location-picker-display">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
                         @if (hasSelectedLocation)
                         {
@@ -350,10 +330,11 @@
                             <span class="placeholder-text">Where to?</span>
                         }
                     </a>
+                    <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
                 </div>
-                <div class="col-lg-3 col-md-6 col-12">
-                    <a href="/Home/DatePicker@(BuildQueryParams(null, selectedGuestsValue, selectedLocationValue))"
-                       class="form-control ahb-datepicker-button">
+                <div class="col-lg col-md-6 col-12">
+                    <a href="/Home/DatePicker@(BuildPickerQueryParams(null, selectedGuestsValue, selectedLocationValue))"
+                       class="form-control ahb-picker-button" id="date-picker-display">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
                         @if (hasSelectedDates)
                         {
@@ -365,9 +346,9 @@
                         }
                     </a>
                 </div>
-                <div class="col-lg-3 col-md-6 col-12">
-                    <a href="/Home/GuestPicker@(BuildQueryParams(selectedDatesValue, null, selectedLocationValue))"
-                       class="form-control ahb-guestpicker-button">
+                <div class="col-lg col-md-12 col-12">
+                    <a href="/Home/GuestPicker@(BuildPickerQueryParams(selectedDatesValue, null, selectedLocationValue))"
+                       class="form-control ahb-picker-button" id="guest-picker-display">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0115 8h-1a4 4 0 00-3.86 2.87A6.967 6.967 0 008 16c0 .34.024.673.07 1H4a2 2 0 00-2 2v1a1 1 0 001 1h14a1 1 0 001-1v-1a2 2 0 00-2-2h-1.07z" /></svg>
                         @if (hasSelectedGuests)
                         {
@@ -379,12 +360,35 @@
                         }
                     </a>
                 </div>
-                <div class="col-lg-2 col-md-6 col-12 d-grid">
-                    <button type="submit"
-                            class="animated-button"
-                            disabled="@(!hasSelectedLocation || !hasSelectedDates || !hasSelectedGuests)">
+            </div>
+
+            <div class="row g-2 mb-3 align-items-stretch">
+                <div class="col-lg col-md-4 col-sm-6 col-12 filter-group">
+                    <label for="minRating">Min Rating</label>
+                    <select name="minRating" id="minRating" class="form-select">
+                        <option value="">Any Rating</option>
+                        <option value="1">1+ Star</option>
+                        <option value="2">2+ Stars</option>
+                        <option value="3">3+ Stars</option>
+                        <option value="4">4+ Stars</option>
+                        <option value="5">5 Stars</option>
+                    </select>
+                </div>
+                <div class="col-lg col-md-4 col-sm-6 col-12 filter-group">
+                    <label for="minPrice">Min Price</label>
+                    <input type="number" name="minPrice" id="minPrice" class="form-control" placeholder="e.g. 50" min="0" step="10" />
+                </div>
+                <div class="col-lg col-md-4 col-sm-12 col-12 filter-group">
+                    <label for="maxPrice">Max Price</label>
+                    <input type="number" name="maxPrice" id="maxPrice" class="form-control" placeholder="e.g. 300" min="0" step="10" />
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12 d-grid">
+                    <button type="submit" class="animated-button">
                         <svg viewBox="0 0 24 24" class="arr-2" xmlns="http://www.w3.org/2000/svg"><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
-                        <span class="text">Book Now</span>
+                        <span class="text">Search Hotels</span>
                         <span class="circle"></span>
                         <svg viewBox="0 0 24 24" class="arr-1" xmlns="http://www.w3.org/2000/svg"><path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path></svg>
                     </button>
