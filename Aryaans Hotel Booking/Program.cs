@@ -1,24 +1,31 @@
 using Microsoft.EntityFrameworkCore;
 using Aryaans_Hotel_Booking.Data;
-using Aryaans_Hotel_Booking.Services; // <-- For HotelDataSeeder
-using Microsoft.AspNetCore.Hosting;   // <-- For IWebHostEnvironment
-using Microsoft.Extensions.DependencyInjection; // <-- For CreateScope
-using Microsoft.Extensions.Logging; // <-- For ILogger
+using Aryaans_Hotel_Booking.Services; 
+using Microsoft.AspNetCore.Hosting;   
+using Microsoft.Extensions.DependencyInjection; 
+using Microsoft.Extensions.Logging; 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddDistributedMemoryCache(); 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); 
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true; 
+});
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>(); 
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
@@ -49,7 +56,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization(); 
+app.UseSession(); 
+
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

@@ -24,26 +24,34 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse justify-content-end" id="mainNav">
+                    @using Microsoft.AspNetCore.Http;
+
                     <ul class="navbar-nav">
-                        @if (TempData["Username"] != null)
+                        @if (!string.IsNullOrEmpty(Context.Session.GetString("Username")))
                         {
+                            var username = Context.Session.GetString("Username");
+
                             <li class="nav-item">
-                                <span class="nav-link text-white">Hello, @TempData["Username"]!</span>
+                                @if (username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="nav-link text-light" style="color: red !important; font-weight: bold;">Welcome, @username!</span>
+                                }
+                                else
+                                {
+                                    <span class="nav-link text-light">Welcome, @username</span>
+                                }
                             </li>
                             <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" class="form-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="nav-link btn btn-link text-white">Logout</button>
-                                </form>
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Logout">Logout</a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Account" asp-action="Register">Register</a>
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                         }
                     </ul>

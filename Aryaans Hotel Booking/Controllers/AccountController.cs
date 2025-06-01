@@ -42,6 +42,7 @@ namespace Aryaans_Hotel_Booking.Controllers
                 {
                     _logger.LogInformation($"User {email} logged in successfully.");
                     TempData["SuccessMessage"] = "Login successful! Welcome back.";
+                    HttpContext.Session.SetString("Username", user.Username);
                     return RedirectToAction("Index", "Home"); 
                 }
             }
@@ -49,6 +50,13 @@ namespace Aryaans_Hotel_Booking.Controllers
             _logger.LogWarning($"Login attempt failed for user {email}. Invalid credentials.");
             ModelState.AddModelError(string.Empty, "Invalid login attempt. Please check your email and password.");
             return View(); 
+        }
+        [HttpGet] 
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("Username");
+            TempData["SuccessMessage"] = "You have been successfully logged out."; // Optional: Add a success message
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
