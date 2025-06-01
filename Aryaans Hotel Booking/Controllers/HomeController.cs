@@ -25,12 +25,35 @@ namespace Aryaans_Hotel_Booking.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        public IActionResult Index(string? selectedDates, string? selectedGuests, string? selectedLocation)
+        public async Task<IActionResult> Index(string? selectedDates, string? selectedGuests, string? selectedLocation)
         {
             ViewData["SelectedDates"] = selectedDates;
             ViewData["SelectedGuests"] = !string.IsNullOrEmpty(selectedGuests) ? WebUtility.UrlDecode(selectedGuests) : null;
             ViewData["SelectedLocation"] = !string.IsNullOrEmpty(selectedLocation) ? WebUtility.UrlDecode(selectedLocation) : null;
-            return View();
+
+            var featuredHotelsFromDb = await _context.Hotels
+                                                 .OrderByDescending(h => h.StarRating) 
+                                                 .ThenByDescending(h => h.ReviewScore)
+                                                 .Take(3) 
+                                                 .ToListAsync();
+
+            var featuredHotelViewModels = new List<HotelResultViewModel>();
+            foreach (var hotel in featuredHotelsFromDb)
+            {
+                featuredHotelViewModels.Add(new HotelResultViewModel
+                {
+                    Id = hotel.Id,
+                    HotelName = hotel.Name,
+                    ImageUrl = hotel.ImagePath, 
+                    StarRating = hotel.StarRating,
+                    LocationName = $"{hotel.City}, {hotel.Country}",
+                    ReviewScore = (decimal)(hotel.ReviewScore ?? 0.0),
+                    ReviewScoreText = GetReviewText((decimal)(hotel.ReviewScore ?? 0.0)),
+                    PricePerNight = hotel.PricePerNight,
+                    CurrencySymbol = "BGN" 
+                });
+            }
+            return View(featuredHotelViewModels);
         }
 
         public IActionResult DatePicker()

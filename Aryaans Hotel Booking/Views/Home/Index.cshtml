@@ -1,14 +1,14 @@
-﻿@model dynamic
+﻿@model IEnumerable<Aryaans_Hotel_Booking.Models.HotelResultViewModel>
 @{
     ViewData["Title"] = "Welcome to Aryaan's Hotel Booking";
 
-    var selectedDatesValue = ViewData["SelectedDates"] as string; 
+    var selectedDatesValue = ViewData["SelectedDates"] as string;
     bool hasSelectedDates = !string.IsNullOrEmpty(selectedDatesValue);
 
-    var selectedGuestsValue = ViewData["SelectedGuests"] as string; 
+    var selectedGuestsValue = ViewData["SelectedGuests"] as string;
     bool hasSelectedGuests = !string.IsNullOrEmpty(selectedGuestsValue);
 
-    var selectedLocationValue = ViewData["SelectedLocation"] as string; 
+    var selectedLocationValue = ViewData["SelectedLocation"] as string;
     bool hasSelectedLocation = !string.IsNullOrEmpty(selectedLocationValue);
 
     Func<string?, string?, string?, string> BuildQueryParams =
@@ -23,6 +23,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <style>
         :root {
             --ahb-primary-color: #74e5b2;
@@ -33,6 +34,7 @@
             --ahb-form-element-height: 52px;
         }
 
+        /* Styles from your original Index.cshtml for Hero Section */
         .hero-section {
             position: relative;
             display: flex;
@@ -40,7 +42,7 @@
             justify-content: center;
             min-height: 92vh;
             padding: 4rem 1rem;
-            background: url('/images/hero-background.jpg') center center / cover no-repeat;
+            background: url('/images/hero-background.jpg') center center / cover no-repeat; /* Ensure this image exists */
             color: var(--ahb-light-text);
             text-align: center;
         }
@@ -97,7 +99,7 @@
             transition: all 0.2s ease-in-out;
             font-size: 0.95rem;
             height: var(--ahb-form-element-height);
-            line-height: normal;
+            line-height: normal; /* Ensure vertical alignment */
             width: 100%;
             box-sizing: border-box;
         }
@@ -115,13 +117,14 @@
             }
 
         .ahb-datepicker-button, .ahb-guestpicker-button, .ahb-locationpicker-button {
-            display: flex;
+            display: flex; /* This makes it behave like a block for alignment */
             align-items: center;
             justify-content: flex-start;
             gap: 0.5rem;
             text-decoration: none;
             cursor: pointer;
             color: var(--ahb-light-text);
+            /* These are also .form-control, so they inherit height, padding etc. */
         }
 
             .ahb-datepicker-button .placeholder-text, .ahb-guestpicker-button .placeholder-text, .ahb-locationpicker-button .placeholder-text {
@@ -129,11 +132,11 @@
             }
 
             .ahb-datepicker-button:hover, .ahb-guestpicker-button:hover, .ahb-locationpicker-button:hover {
-                background-color: rgba(255, 255, 255, 0.15);
-                border-color: var(--ahb-primary-color);
+                background-color: rgba(255, 255, 255, 0.15); /* from .form-control:focus */
+                border-color: var(--ahb-primary-color); /* from .form-control:focus */
                 color: var(--ahb-primary-color);
                 text-decoration: none;
-                box-shadow: 0 0 0 0.2rem var(--ahb-button-glow);
+                box-shadow: 0 0 0 0.2rem var(--ahb-button-glow); /* from .form-control:focus */
             }
 
                 .ahb-datepicker-button:hover .placeholder-text, .ahb-guestpicker-button:hover .placeholder-text, .ahb-locationpicker-button:hover .placeholder-text {
@@ -153,16 +156,17 @@
                 opacity: 1;
             }
 
+        /* Ensure .animated-button styles are complete and correct */
         .animated-button {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            padding: 0.65rem 1.5rem;
+            gap: 4px; /* Reduced gap for better alignment with text */
+            padding: 0.65rem 1.5rem; /* Adjust padding as needed */
             border: 2px solid transparent;
             font-size: 0.95rem;
-            background-color: inherit;
+            background-color: inherit; /* Should be transparent for hero */
             border-radius: 100px;
             font-weight: 600;
             color: var(--ahb-primary-color);
@@ -173,6 +177,7 @@
             overflow: hidden;
             cursor: pointer;
             text-decoration: none;
+            line-height: normal; /* Added for vertical centering of text */
         }
 
             .animated-button svg {
@@ -207,14 +212,14 @@
             .animated-button .text {
                 position: relative;
                 z-index: 1;
-                transform: translateX(-12px);
+                transform: translateX(-12px); /* Adjust as needed for centering */
                 transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
             }
 
             .animated-button:hover {
-                box-shadow: 0 0 0 12px transparent;
-                color: #212121;
-                border-radius: 12px;
+                box-shadow: 0 0 0 12px transparent; /* Original style */
+                color: #212121; /* Text color on hover */
+                border-radius: 12px; /* Original style */
             }
 
                 .animated-button:hover .arr-1 {
@@ -226,32 +231,97 @@
                 }
 
                 .animated-button:hover .text {
-                    transform: translateX(12px);
+                    transform: translateX(12px); /* Adjust as needed */
                 }
 
                 .animated-button:hover svg {
-                    fill: #212121;
+                    fill: #212121; /* Arrow color on hover */
                 }
 
                 .animated-button:hover .circle {
-                    width: 220px;
-                    height: 220px;
+                    width: 220px; /* Expands to fill button */
+                    height: 220px; /* Expands to fill button */
                     opacity: 1;
                 }
 
-            .animated-button:active {
-                scale: 0.95;
-                box-shadow: 0 0 0 4px var(--ahb-primary-color);
+            .animated-button:disabled { /* Style for disabled button */
+                background-color: rgba(116, 229, 178, 0.3); /* Semi-transparent primary color */
+                color: rgba(241, 243, 245, 0.7); /* Lighter text */
+                box-shadow: 0 0 0 1.5px rgba(116, 229, 178, 0.5);
+                cursor: not-allowed;
             }
 
+                .animated-button:disabled:hover .circle { /* Prevent hover animation on disabled */
+                    width: 20px;
+                    height: 20px;
+                    opacity: 0;
+                }
+
+                .animated-button:disabled:hover .text {
+                    transform: translateX(-12px);
+                }
+
+                .animated-button:disabled:hover svg {
+                    fill: var(--ahb-primary-color); /* Keep original arrow color or make it muted */
+                }
+
+                .animated-button:disabled:hover .arr-1 {
+                    right: 16px;
+                }
+
+                .animated-button:disabled:hover .arr-2 {
+                    left: -25%;
+                }
+
+
         .button-right-nudge {
-            margin-left: 12px;
+            /* margin-left: 12px; original, check if still needed with col-lg-2 grid */
         }
 
-        a.form-control {
+        a.form-control { /* For the picker links that are also form-controls */
             text-align: left;
-            line-height: 1.5;
+            line-height: 1.5; /* Original for text alignment */
         }
+
+        /* Styles for the new Featured Hotels section */
+        .featured-hotels-section {
+            padding: 3rem 1rem; /* Adjusted padding */
+            background-color: #ffffff; /* Changed to white as per your image, or choose a very light grey like #f8f9fa if preferred for contrast */
+            color: #333; /* Default text color for this section */
+        }
+
+            .featured-hotels-section h2 {
+                text-align: center;
+                margin-bottom: 2.5rem;
+                font-weight: 600; /* Slightly less heavy */
+                color: #2c3e50; /* Darker, more standard heading color */
+                font-size: 2rem;
+            }
+
+        /* Ensure Bootstrap's card styles are not being overly reset by global styles.
+                   The _HotelCard.cshtml mostly uses Bootstrap classes. If Bootstrap CSS is linked
+                   correctly in _Layout.cshtml, the cards should have a default look.
+                   If they are still "all white", it implies Bootstrap might not be loading
+                   or its styles are being heavily counteracted by other CSS.
+                */
+
+        /* Example: Minor enhancement to card if needed, but Bootstrap should handle most of it */
+        .card {
+            border: 1px solid #e9ecef; /* Default Bootstrap card border is often subtle */
+        }
+
+            .card .card-title {
+                color: #343a40; /* Ensure card titles have good color */
+            }
+
+            .card .badge { /* Ensure badges have clear text */
+                color: #212529; /* For light backgrounds */
+            }
+
+                .card .badge.bg-success, .card .badge.bg-primary { /* For dark backgrounds */
+                    color: #fff;
+                }
+
     </style>
 }
 
@@ -265,8 +335,6 @@
             <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
             <input type="hidden" name="selectedDates" id="hidden-dates-input" value="@selectedDatesValue" />
             <input type="hidden" name="selectedGuests" id="hidden-guests-input" value="@selectedGuestsValue" />
-
-            <input type="hidden" name="destination" id="hidden-destination-input" value="@selectedLocationValue" />
 
             <div class="row g-2 justify-content-center align-items-center">
                 <div class="col-lg-3 col-md-6 col-12">
@@ -311,7 +379,7 @@
                         }
                     </a>
                 </div>
-                <div class="col-lg-2 col-md-6 col-12 d-grid button-right-nudge">
+                <div class="col-lg-2 col-md-6 col-12 d-grid">
                     <button type="submit"
                             class="animated-button"
                             disabled="@(!hasSelectedLocation || !hasSelectedDates || !hasSelectedGuests)">
@@ -325,3 +393,20 @@
         </form>
     </div>
 </section>
+
+@if (Model != null && Model.Any())
+{
+    <section class="featured-hotels-section">
+        <div class="container">
+            <h2>Featured Stays</h2>
+            <div class="row">
+                @foreach (var hotel in Model)
+                {
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <partial name="_HotelCard" model="hotel" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

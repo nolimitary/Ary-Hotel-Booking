@@ -1,0 +1,60 @@
+﻿@model Aryaans_Hotel_Booking.Models.HotelResultViewModel
+
+<div class="card mb-4 shadow-sm">
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.HotelName" style="height: 225px; object-fit: cover;">
+    }
+    else
+    {
+        <img src="/images/hotels/default-hotel-placeholder.jpg" class="card-img-top" alt="Default Hotel Image" style="height: 225px; object-fit: cover;">
+    }
+    <div class="card-body">
+        <h5 class="card-title">@Model.HotelName</h5>
+        <p class="card-text"><small class="text-muted">@Model.LocationName</small></p>
+
+        @if (!string.IsNullOrEmpty(Model.DistanceFromCenter))
+        {
+            <p class="card-text"><small>@Model.DistanceFromCenter from center</small></p>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-warning text-dark">@Model.StarRating <i class="fas fa-star"></i></span>
+            @if (Model.ReviewScore > 0)
+            {
+                <span class="badge
+                    @(Model.ReviewScore >= 8.5m ? "bg-success" : Model.ReviewScore >= 7.0m ? "bg-info" : "bg-secondary")">
+                    @Model.ReviewScore.ToString("0.0") @(!string.IsNullOrEmpty(Model.ReviewScoreText) ? Model.ReviewScoreText : "")
+                    (@Model.ReviewCount reviews)
+                </span>
+            }
+        </div>
+
+        <p class="card-text h5">
+            <strong>@Model.CurrencySymbol @Model.PricePerNight.ToString("F2")</strong>
+            <small class="text-muted">/ night</small>
+        </p>
+
+        @if (Model.RecommendedRooms != null && Model.RecommendedRooms.Any())
+        {
+            <div class="mt-2">
+                <small><strong>Popular rooms:</strong></small>
+                <ul class="list-unstyled list-inline mb-0">
+                    @foreach (var room in Model.RecommendedRooms.Take(2)) 
+                    {
+                        <li class="list-inline-item"><span class="badge bg-light text-dark">@room.RoomTypeName</span></li> 
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.AvailabilityUrl))
+        {
+            <a href="@Model.AvailabilityUrl" class="btn btn-primary mt-3 w-100">View Availability</a>
+        }
+        else
+        {
+            <a asp-controller="Hotel" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary mt-3 w-100">View Details</a>
+        }
+    </div>
+</div>
