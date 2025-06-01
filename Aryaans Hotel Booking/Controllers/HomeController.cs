@@ -589,26 +589,52 @@ namespace Aryaans_Hotel_Booking.Controllers
         }
 
         public async Task<IActionResult> SearchResults(
-           string? destination,
-           string? selectedDates,
-           string? selectedGuests,
-           int pageNumber = 1) 
+            string? destination,
+            string? selectedDates,
+            string? selectedGuests,
+            string? sortBy = "name", // Default sort field
+            string? sortOrder = "asc", // Default sort order
+            int pageNumber = 1)
         {
+            _logger.LogInformation($"Search Request: Dest='{destination}', Dates='{selectedDates}', Guests='{selectedGuests}', SortBy='{sortBy}', SortOrder='{sortOrder}', Page='{pageNumber}'");
+
             string decodedDestination = WebUtility.UrlDecode(destination ?? "");
             string decodedGuests = WebUtility.UrlDecode(selectedGuests ?? "");
 
-            int pageSize = 6; 
+            int pageSize = 6;
+
             IQueryable<Hotel> query = _context.Hotels.AsQueryable();
 
             if (!string.IsNullOrEmpty(decodedDestination))
             {
                 query = query.Where(h => h.Country.ToLower().Contains(decodedDestination.ToLower()) ||
                                          h.City.ToLower().Contains(decodedDestination.ToLower()));
-                _logger.LogInformation($"Searching hotels in database for destination '{decodedDestination}'.");
             }
-            else
+
+            switch (sortBy?.ToLower())
             {
-                _logger.LogInformation($"No specific destination provided. Querying all hotels.");
+                case "price":
+                    query = sortOrder?.ToLower() == "desc"
+                        ? query.OrderByDescending(h => h.PricePerNight)
+                        : query.OrderBy(h => h.PricePerNight);
+                    break;
+                case "rating": 
+                    query = sortOrder?.ToLower() == "desc"
+                        ? query.OrderByDescending(h => h.StarRating)
+                        : query.OrderBy(h => h.StarRating);
+                    break;
+                case "score": 
+                    query = sortOrder?.ToLower() == "desc"
+                        ? query.OrderByDescending(h => h.ReviewScore ?? 0.0) 
+                        : query.OrderBy(h => h.ReviewScore ?? 0.0);
+                    break;
+                case "name":
+                default:
+                    sortBy = "name"; 
+                    query = sortOrder?.ToLower() == "desc"
+                        ? query.OrderByDescending(h => h.Name)
+                        : query.OrderBy(h => h.Name);
+                    break;
             }
 
             int totalItemCount = await query.CountAsync();
@@ -618,7 +644,7 @@ namespace Aryaans_Hotel_Booking.Controllers
                                     .Take(pageSize)
                                     .ToListAsync();
 
-            _logger.LogInformation($"Retrieved {hotelsFromDb.Count} hotels for page {pageNumber}.");
+            _logger.LogInformation($"Retrieved {hotelsFromDb.Count} hotels for page {pageNumber} after sorting.");
 
             var hotelResults = new List<HotelResultViewModel>();
             foreach (var hotel in hotelsFromDb)
@@ -632,8 +658,9 @@ namespace Aryaans_Hotel_Booking.Controllers
                     LocationName = $"{hotel.City}, {hotel.Country}",
                     ReviewScore = (decimal)(hotel.ReviewScore ?? 0.0),
                     ReviewScoreText = GetReviewText((decimal)(hotel.ReviewScore ?? 0.0)),
+       
                     PricePerNight = hotel.PricePerNight,
-                    CurrencySymbol = "BGN", 
+                    CurrencySymbol = "BGN",
                 });
             }
 
@@ -646,7 +673,9 @@ namespace Aryaans_Hotel_Booking.Controllers
                 CurrentPage = pageNumber,
                 PageSize = pageSize,
                 TotalCount = totalItemCount,
-                TotalPages = (int)Math.Ceiling(totalItemCount / (double)pageSize)
+                TotalPages = (int)Math.Ceiling(totalItemCount / (double)pageSize),
+                CurrentSortField = sortBy, 
+                CurrentSortOrder = sortOrder 
             };
 
             return View("Results", viewModel);

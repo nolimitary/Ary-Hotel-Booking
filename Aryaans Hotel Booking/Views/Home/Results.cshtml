@@ -1,5 +1,4 @@
-﻿@* File: Views/Home/Results.cshtml *@
-@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
+﻿@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
 @{
     ViewData["Title"] = "Hotel Search Results";
     if (!string.IsNullOrEmpty(Model.SearchDestination))
@@ -11,7 +10,6 @@
 <div class="container mt-4">
     <h1 class="mb-4">@ViewData["Title"]</h1>
 
-    @* Optional: Display search parameters used *@
     @if (!string.IsNullOrEmpty(Model.SearchDates))
     {
         <p><strong>Dates:</strong> @Model.SearchDates</p>
@@ -24,12 +22,9 @@
     <div class="row">
         @if (Model.Results != null && Model.Results.Any())
         {
-            @* This loop is key. 'hotel' here is a single HotelResultViewModel *@
             foreach (var hotel in Model.Results)
             {
                 <div class="col-md-6 col-lg-4 mb-4">
-                    @* Adjust column classes as needed *@
-                    @* You pass the 'hotel' (single item) to the partial view *@
                     <partial name="_HotelCard" model="hotel" />
                 </div>
             }
@@ -42,7 +37,6 @@
         }
     </div>
 
-    @* --- PAGING CONTROLS --- *@
     @if (Model.TotalPages > 1)
     {
         <nav aria-label="Hotel search results pages">
@@ -68,7 +62,6 @@
                     {
                         <li class="page-item active" aria-current="page"><span class="page-link">@i</span></li>
                     }
-                    // Add logic for limited page numbers if desired, this shows all:
                     else
                     {
                         <li class="page-item">
@@ -101,7 +94,3 @@
     }
 </div>
 
-@* If this view has any forms that need validation, include this section *@
-@* @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-} *@
