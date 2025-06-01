@@ -83,24 +83,60 @@ namespace Aryaans_Hotel_Booking.Controllers
         [HttpGet]
         public IActionResult AddHotel()
         {
+            // Check if the user is an admin.
+            // The actual session key might be different based on your login implementation.
             if (HttpContext.Session.GetString("Username") != "admin")
             {
                 _logger.LogWarning("Non-admin user tried to access AddHotel GET page.");
+                // Return a 403 Forbidden status if the user is not authorized.
                 return Forbid();
             }
+
+            // Return the view for adding a hotel.
+            // If you have a specific ViewModel for the AddHotel page (e.g., AddHotelViewModel),
+            // you might want to initialize and pass it here:
+            // return View(new AddHotelViewModel());
             return View();
         }
 
+        // POST: Home/AddHotel
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddHotel(IFormFile Image, string Name, string Country, string City, int StarRating, decimal ReviewScore, decimal PricePerNight)
+        public async Task<IActionResult> AddHotel(
+            IFormFile? Image, // Image can be nullable if it's optional
+            string Name,
+            string Country,
+            string City,
+            string Address,
+            string Description,
+            int StarRating,
+            decimal ReviewScore,
+            decimal PricePerNight)
         {
+            // Authorization check
             if (HttpContext.Session.GetString("Username") != "admin")
             {
                 _logger.LogWarning("Non-admin user tried to POST to AddHotel.");
                 return Forbid();
             }
 
+            // Create an object to hold the form data, useful for repopulating the form if validation fails.
+            // This could be your Hotel entity or a specific AddHotelViewModel.
+            // Using Hotel entity here for simplicity, assuming the view can bind to its properties.
+            var hotelViewModelForFormRepopulation = new Hotel
+            {
+                Name = Name,
+                Country = Country,
+                City = City,
+                Address = Address,
+                Description = Description,
+                PricePerNight = PricePerNight,
+                StarRating = StarRating,
+                ReviewScore = (double)ReviewScore
+                // ImagePath will be set if an image is uploaded or if it's part of a more complex ViewModel
+            };
+
+            // Server-side validation based on model annotations (e.g., [Required])
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("AddHotel POST request failed model validation.");
@@ -115,62 +151,86 @@ namespace Aryaans_Hotel_Booking.Controllers
                         }
                     }
                 }
-                return View();
+                // Return the view with the submitted data to repopulate the form and show validation errors.
+                return View(hotelViewModelForFormRepopulation);
             }
 
-            string virtualPath = null;
+            string? virtualImagePath = null; // Path to be stored in the database (URL path)
+
+            // Image processing logic
             if (Image != null && Image.Length > 0)
             {
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "hotels");
-                Directory.CreateDirectory(uploadsFolder);
+                // Define the server-side folder path to save images.
+                // Path.Combine correctly uses backslashes on Windows for the physical path.
+                string serverUploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "hotels");
 
+                // Ensure the directory exists; create it if it doesn't.
+                Directory.CreateDirectory(serverUploadsFolder);
+
+                // Generate a unique file name to prevent overwriting existing files.
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(Image.FileName);
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Full physical path to the file on the server.
+                string serverFilePath = Path.Combine(serverUploadsFolder, uniqueFileName);
 
                 try
                 {
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    // Save the uploaded image to the server.
+                    using (var fileStream = new FileStream(serverFilePath, FileMode.Create))
                     {
-                        await Image.CopyToAsync(stream);
+                        await Image.CopyToAsync(fileStream);
                     }
-                    virtualPath = $"/images/hotels/{uniqueFileName}";
-                    _logger.LogInformation($"Image '{uniqueFileName}' uploaded successfully to '{filePath}'.");
+                    // Set the virtual path (URL path) for database storage and web access.
+                    // This path uses forward slashes, which is standard for URLs.
+                    virtualImagePath = $"/images/hotels/{uniqueFileName}";
+                    _logger.LogInformation($"Image '{uniqueFileName}' uploaded successfully to '{serverFilePath}'.");
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Error uploading image '{Image.FileName}'.");
                     ModelState.AddModelError("Image", "Error uploading image. Please try again.");
-                    return View();
+                    // Return the view with the model to repopulate form fields and show the error.
+                    return View(hotelViewModelForFormRepopulation);
                 }
             }
 
+            // Create the Hotel entity to be saved to the database.
             var hotel = new Hotel
             {
                 Name = Name,
                 Country = Country,
                 City = City,
+                Address = Address,
+                Description = Description,
                 PricePerNight = PricePerNight,
                 StarRating = StarRating,
                 ReviewScore = (double)ReviewScore,
-                ImagePath = virtualPath
+                ImagePath = virtualImagePath // This can be null if no image was uploaded
             };
 
             try
             {
                 _context.Hotels.Add(hotel);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Hotel '{hotel.Name}' added to database by user {HttpContext.Session.GetString("Username")}.");
+                _logger.LogInformation($"Hotel '{hotel.Name}' (ID: {hotel.Id}) added to database by user {HttpContext.Session.GetString("Username")}.");
                 TempData["SuccessMessage"] = $"Hotel '{hotel.Name}' added successfully!";
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex) 
             {
-                _logger.LogError(ex, $"Error saving hotel '{hotel.Name}' to database.");
-                TempData["ErrorMessage"] = "Error saving hotel to database. Please try again.";
-                return View();
+                _logger.LogError(ex, $"Database error saving hotel '{hotel.Name}'. InnerException: {ex.InnerException?.Message}");
+                TempData["ErrorMessage"] = "Error saving hotel to database. Please check the data and try again. If the problem persists, contact support.";
+                return View(hotel);
+            }
+            catch (Exception ex) 
+            {
+                _logger.LogError(ex, $"Generic error saving hotel '{hotel.Name}'.");
+                TempData["ErrorMessage"] = "An unexpected error occurred while saving the hotel. Please try again.";
+                return View(hotel);
             }
 
             return RedirectToAction("SearchResults", new { destination = Country });
         }
+
 
         // GET: Home/EditHotel/5
         [HttpGet]

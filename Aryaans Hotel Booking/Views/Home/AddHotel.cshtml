@@ -1,53 +1,186 @@
-﻿@{
+﻿@model Aryaans_Hotel_Booking.Data.Entities.Hotel
+@{
     ViewData["Title"] = "Add New Hotel";
 }
 
 <link rel="stylesheet" href="~/css/add-hotel.css" />
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse; 
+        justify-content: flex-end; 
+        font-size: 2em; 
+        cursor: pointer;
+    }
+
+        .star-rating input[type="radio"] {
+            display: none; 
+        }
+
+        .star-rating label {
+            color: #ddd; 
+            padding: 0 0.1em;
+            transition: color 0.2s ease-in-out;
+        }
+
+            .star-rating input[type="radio"]:checked ~ label,
+            .star-rating label:hover,
+            .star-rating label:hover ~ label {
+                color: #f5b301; 
+            }
+
+        .star-rating input[type="radio"]:not(:checked) ~ label:hover,
+        .star-rating input[type="radio"]:not(:checked) ~ label:hover ~ label {
+            color: #f5b301;
+        }
+
+    .custom-file-input-container {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .custom-file-input-button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+        .custom-file-input-button:hover {
+            background-color: #0056b3;
+        }
+
+    .custom-file-input-container input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0; /* Make the original file input invisible */
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .file-name-display {
+        margin-top: 8px;
+        font-style: italic;
+        color: #555;
+    }
+
+    .btn-primary, .btn-secondary {
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .add-hotel-container h2 {
+        margin-bottom: 25px;
+        color: #333;
+        text-align: center;
+    }
+</style>
 
 <div class="container add-hotel-container">
     <h2>@ViewData["Title"]</h2>
 
     <form asp-action="AddHotel" method="post" enctype="multipart/form-data">
-        @Html.AntiForgeryToken() <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <div class="form-group">
-            <label for="Name" class="control-label">Hotel Name</label>
-            <input type="text" name="Name" class="form-control" />
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="control-label">Hotel Name</label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g., Grand Plaza Hotel" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="Country" class="control-label"></label>
+                    <input asp-for="Country" class="form-control" placeholder="e.g., Spain" />
+                    <span asp-validation-for="Country" class="text-danger"></span>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="Country" class="control-label">Country</label>
-            <input type="text" name="Country" class="form-control" />
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="City" class="control-label"></label>
+                    <input asp-for="City" class="form-control" placeholder="e.g., Barcelona" />
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="Address" class="control-label"></label>
+                    <input asp-for="Address" class="form-control" placeholder="e.g., 123 Main Street" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="City" class="control-label">City</label>
-            <input type="text" name="City" class="form-control" />
+        <div class="form-group mb-3">
+            <label asp-for="Description" class="control-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter a brief description of the hotel..."></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
         </div>
 
-        <div class="form-group">
-            <label for="StarRating" class="control-label">Star Rating (1-5)</label>
-            <input type="number" name="StarRating" class="form-control" min="1" max="5" />
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label asp-for="StarRating" class="control-label d-block">Star Rating</label>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="StarRating" value="5" asp-for="StarRating" /><label for="star5" title="5 stars">&#9733;</label>
+                        <input type="radio" id="star4" name="StarRating" value="4" asp-for="StarRating" /><label for="star4" title="4 stars">&#9733;</label>
+                        <input type="radio" id="star3" name="StarRating" value="3" asp-for="StarRating" /><label for="star3" title="3 stars">&#9733;</label>
+                        <input type="radio" id="star2" name="StarRating" value="2" asp-for="StarRating" /><label for="star2" title="2 stars">&#9733;</label>
+                        <input type="radio" id="star1" name="StarRating" value="1" asp-for="StarRating" /><label for="star1" title="1 star">&#9733;</label>
+                    </div>
+                    <span asp-validation-for="StarRating" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label asp-for="PricePerNight" class="control-label"></label>
+                    <input asp-for="PricePerNight" class="form-control" type="number" step="0.01" placeholder="e.g., 150.00" />
+                    <span asp-validation-for="PricePerNight" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label asp-for="ReviewScore" class="control-label">Review Score (0.0-10.0)</label>
+                    <input asp-for="ReviewScore" class="form-control" type="number" step="0.1" min="0" max="10" placeholder="e.g., 8.5" />
+                    <span asp-validation-for="ReviewScore" class="text-danger"></span>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="PricePerNight" class="control-label">Price Per Night</label>
-            <input type="number" name="PricePerNight" class="form-control" step="0.01" />
+        <div class="form-group mb-4">
+            <label for="Image" class="control-label d-block">Hotel Image</label>
+            <div class="custom-file-input-container">
+                <span class="custom-file-input-button">Choose File</span>
+                <input type="file" name="Image" id="Image" accept="image/*" />
+            </div>
+            <div id="fileNameDisplay" class="file-name-display">No file chosen</div>
+            @* MODIFIED LINE BELOW: Using Html.ValidationMessage for the "Image" parameter *@
+            <span class="text-danger">@Html.ValidationMessage("Image")</span>
         </div>
 
-        <div class="form-group">
-            <label for="ReviewScore" class="control-label">Review Score (0.0-10.0)</label>
-            <input type="number" name="ReviewScore" class="form-control" step="0.1" min="0" max="10" />
-        </div>
-
-        <div class="form-group">
-            <label for="Image" class="control-label">Hotel Image</label>
-            <input type="file" name="Image" class="form-control-file" />
-        </div>
-
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Add Hotel</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        <div class="form-group text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg px-5">Add Hotel</button>
+            <a asp-action="Index" class="btn btn-secondary btn-lg px-4 ms-2">Cancel</a>
         </div>
     </form>
 </div>
@@ -56,4 +189,26 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Star Rating: Set initial checked state based on model value if editing or on validation reload
+            const currentRatingInput = document.querySelector('.star-rating input[name="StarRating"][value="@(Model?.StarRating ?? 0)"]');
+            if (currentRatingInput) {
+                currentRatingInput.checked = true;
+            }
+
+            // Custom File Input: Display selected file name
+            const fileInput = document.getElementById('Image');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            if (fileInput && fileNameDisplay) {
+                fileInput.addEventListener('change', function (e) {
+                    if (e.target.files.length > 0) {
+                        fileNameDisplay.textContent = e.target.files[0].name;
+                    } else {
+                        fileNameDisplay.textContent = 'No file chosen';
+                    }
+                });
+            }
+        });
+    </script>
 }

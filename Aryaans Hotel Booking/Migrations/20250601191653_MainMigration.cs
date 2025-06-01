@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Aryaans_Hotel_Booking.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateSqlServer : Migration
+    public partial class MainMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

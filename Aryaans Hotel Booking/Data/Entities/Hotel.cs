@@ -21,15 +21,17 @@ namespace Aryaans_Hotel_Booking.Data.Entities
         [MaxLength(50)]
         public string City { get; set; }
 
+        [Required]
         [MaxLength(200)]
         public string Address { get; set; }
-
+            
+        [Required] 
         [MaxLength(1000)]
         public string Description { get; set; }
 
-        [Required] 
-        [Column(TypeName = "decimal(18, 2)")] 
-        public decimal PricePerNight { get; set; } 
+        [Required]
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal PricePerNight { get; set; }
 
         [Required]
         [Range(1, 5)]
@@ -39,7 +41,7 @@ namespace Aryaans_Hotel_Booking.Data.Entities
         public double? ReviewScore { get; set; }
 
         [MaxLength(255)]
-        public string ImagePath { get; set; }
+        public string ImagePath { get; set; } 
 
         public virtual ICollection<Room> Rooms { get; set; } = new HashSet<Room>();
         public virtual ICollection<Booking> Bookings { get; set; } = new HashSet<Booking>();
