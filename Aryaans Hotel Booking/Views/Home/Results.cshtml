@@ -1,113 +1,107 @@
-﻿@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
-@using Microsoft.AspNetCore.Http @{
-    ViewData["Title"] = $"Hotels in {Model.SearchDestination}";
+﻿@* File: Views/Home/Results.cshtml *@
+@model Aryaans_Hotel_Booking.Models.SearchResultsViewModel
+@{
+    ViewData["Title"] = "Hotel Search Results";
+    if (!string.IsNullOrEmpty(Model.SearchDestination))
+    {
+        ViewData["Title"] = $"Hotels in {Model.SearchDestination}";
+    }
 }
 
-<link rel="stylesheet" href="~/css/search-results.css" asp-append-version="true" />
+<div class="container mt-4">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
 
-<div class="container search-results-container">
-    @if (Context.Session.GetString("Username") == "admin")
+    @* Optional: Display search parameters used *@
+    @if (!string.IsNullOrEmpty(Model.SearchDates))
     {
-        <div class="text-end mb-4">
-            <a asp-controller="Home" asp-action="AddHotel" class="btn" style="background-color: var(--ahb-primary-color); color: var(--ahb-dark-bg); font-weight: 600;">
-                ➕ Add Hotel
-            </a>
-        </div>
+        <p><strong>Dates:</strong> @Model.SearchDates</p>
+    }
+    @if (!string.IsNullOrEmpty(Model.SearchGuests))
+    {
+        <p><strong>Guests:</strong> @Model.SearchGuests</p>
     }
 
-    @if (Model != null && Model.Results.Any())
-    {
-        <h2 class="mb-4" style="color: var(--ahb-light-text);">Showing hotels found for your search</h2>
-        <p class="mb-4" style="color: var(--ahb-muted-text);">
-            Destination: @Model.SearchDestination |
-            Dates: @(string.IsNullOrWhiteSpace(Model.SearchDates) || Model.SearchDates == "Any" ? "Any" : Model.SearchDates) |
-            Guests: @(string.IsNullOrWhiteSpace(Model.SearchGuests) ? "Any" : Model.SearchGuests)
-        </p>
-
-        @foreach (var hotel in Model.Results)
+    <div class="row">
+        @if (Model.Results != null && Model.Results.Any())
         {
-            <div class="hotel-result-card">
-                <div class="hotel-result-card__image">
-                    <img src="@(hotel.ImageUrl ?? "/images/default-hotel.png")" alt="@hotel.HotelName" loading="lazy" />
-                    <button class="hotel-result-card__fav-icon" aria-label="Add to favorites">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
-                    </button>
+            @* This loop is key. 'hotel' here is a single HotelResultViewModel *@
+            foreach (var hotel in Model.Results)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    @* Adjust column classes as needed *@
+                    @* You pass the 'hotel' (single item) to the partial view *@
+                    <partial name="_HotelCard" model="hotel" />
                 </div>
-                <div class="hotel-result-card__details">
-                    <div>
-                        <div class="hotel-result-card__header">
-                            <h3 class="hotel-result-card__name">@hotel.HotelName</h3>
-                            <div>
-                                @if (hotel.StarRating > 0)
-                                {
-                                    <span class="hotel-result-card__stars">
-                                        @for (int i = 0; i < hotel.StarRating; i++)
-                                        {
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; display:inline-block; vertical-align:middle;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                        }
-                                    </span>
-                                }
-                                <span class="hotel-result-card__location">
-                                    <a href="#">@hotel.LocationName</a>
-                                    @if (!string.IsNullOrEmpty(hotel.DistanceFromCenter))
-                                    {
-                                        <span class="hotel-result-card__distance"> - @hotel.DistanceFromCenter</span>
-                                    }
-                                </span>
-                            </div>
-                        </div>
-                        <div class="hotel-result-card__reviews">
-                            <span class="hotel-result-card__review-text">@hotel.ReviewScoreText</span>
-                            <span class="hotel-result-card__review-score @(hotel.ReviewScore >= 8.0m ? "" : (hotel.ReviewScore >= 6.0m ? "ok" : "bad"))">
-                                @hotel.ReviewScore.ToString("0.0")
-                            </span>
-                            <span class="hotel-result-card__review-count">@hotel.ReviewCount reviews</span>
-                        </div>
-                        <div class="hotel-result-card__rooms">
-                            @if (hotel.RecommendedRooms.Any())
-                            {
-                                <div class="hotel-result-card__room-title">Recommended based on your search:</div>
-                                @foreach (var room in hotel.RecommendedRooms)
-                                {
-                                    <div class="hotel-result-card__room-info"><strong>@room.RoomTypeName:</strong> @room.BedInfo</div>
-                                }
-                            }
-                        </div>
-                    </div>
-
-                    <div class="hotel-result-card__pricing-action">
-                        <div class="hotel-result-card__price-details">
-                            <span class="hotel-result-card__price">@hotel.CurrencySymbol@hotel.PricePerNight</span>
-                            <span class="hotel-result-card__price-info">Includes taxes and fees</span>
-                        </div>
-                        <a asp-controller="Home"
-                           asp-action="BookingDetails"
-                           asp-route-hotelName="@System.Net.WebUtility.UrlEncode(hotel.HotelName)"
-                           asp-route-selectedDates="@System.Net.WebUtility.UrlEncode(Model.SearchDates)"
-                           class="hotel-result-card__cta-button">
-                            Book Now
-                        </a>
-                    </div>
-                </div>
-                @if (Context.Session.GetString("Username") == "admin")
-                {
-                    <div class="hotel-result-card__admin-actions mt-2 text-end">
-                        <a asp-controller="Home" asp-action="EditHotel" asp-route-id="@hotel.Id" class="btn btn-sm" style="background-color: yellow; color: black; margin-right: 5px;">Edit</a>
-                        <form asp-controller="Home" asp-action="DeleteHotel" asp-route-id="@hotel.Id" method="post" style="display: inline;">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm" style="background-color: red; color: white;" onclick="return confirm('Are you sure you want to delete the hotel @hotel.HotelName?');">Remove</button>
-                        </form>
-                    </div>
-                }
+            }
+        }
+        else
+        {
+            <div class="col">
+                <p>No hotels found matching your criteria.</p>
             </div>
         }
-    }
-    else
+    </div>
+
+    @* --- PAGING CONTROLS --- *@
+    @if (Model.TotalPages > 1)
     {
-        <div class="text-center" style="padding: 4rem 0;">
-            <h3 style="color: var(--ahb-light-text);">No hotels found</h3>
-            <p style="color: var(--ahb-muted-text);">We couldn't find any hotels matching your criteria: @Model.SearchDestination.</p>
-            <a asp-controller="Home" asp-action="Index" class="btn" style="background-color: var(--ahb-primary-color); color: var(--ahb-dark-bg); font-weight: 600;">Try a New Search</a>
-        </div>
+        <nav aria-label="Hotel search results pages">
+            <ul class="pagination justify-content-center">
+                @if (Model.HasPreviousPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="SearchResults"
+                           asp-route-destination="@Model.SearchDestination"
+                           asp-route-selectedDates="@Model.SearchDates"
+                           asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-pageNumber="@(Model.CurrentPage - 1)">Previous</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <li class="page-item active" aria-current="page"><span class="page-link">@i</span></li>
+                    }
+                    // Add logic for limited page numbers if desired, this shows all:
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="SearchResults"
+                               asp-route-destination="@Model.SearchDestination"
+                               asp-route-selectedDates="@Model.SearchDates"
+                               asp-route-selectedGuests="@Model.SearchGuests"
+                               asp-route-pageNumber="@i">@i</a>
+                        </li>
+                    }
+                }
+
+                @if (Model.HasNextPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="SearchResults"
+                           asp-route-destination="@Model.SearchDestination"
+                           asp-route-selectedDates="@Model.SearchDates"
+                           asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-pageNumber="@(Model.CurrentPage + 1)">Next</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                }
+            </ul>
+        </nav>
+        <p class="text-center">Page @Model.CurrentPage of @Model.TotalPages (@Model.TotalCount results)</p>
     }
 </div>
+
+@* If this view has any forms that need validation, include this section *@
+@* @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} *@

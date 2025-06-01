@@ -588,42 +588,52 @@ namespace Aryaans_Hotel_Booking.Controllers
             });
         }
 
-        public async Task<IActionResult> SearchResults(string destination, string selectedDates, string selectedGuests)
+        public async Task<IActionResult> SearchResults(
+           string? destination,
+           string? selectedDates,
+           string? selectedGuests,
+           int pageNumber = 1) 
         {
             string decodedDestination = WebUtility.UrlDecode(destination ?? "");
             string decodedGuests = WebUtility.UrlDecode(selectedGuests ?? "");
 
-            var hotelResults = new List<HotelResultViewModel>();
-            List<Hotel> hotelsFromDb;
+            int pageSize = 6; 
+            IQueryable<Hotel> query = _context.Hotels.AsQueryable();
 
             if (!string.IsNullOrEmpty(decodedDestination))
             {
-                hotelsFromDb = await _context.Hotels
-                                          .Where(h => h.Country.ToLower() == decodedDestination.ToLower())
-                                          .ToListAsync();
-                _logger.LogInformation($"Found {hotelsFromDb.Count} hotels in database for country '{decodedDestination}'.");
+                query = query.Where(h => h.Country.ToLower().Contains(decodedDestination.ToLower()) ||
+                                         h.City.ToLower().Contains(decodedDestination.ToLower()));
+                _logger.LogInformation($"Searching hotels in database for destination '{decodedDestination}'.");
             }
             else
             {
-                hotelsFromDb = await _context.Hotels.ToListAsync();
-                _logger.LogInformation($"No specific destination provided. Displaying {hotelsFromDb.Count} hotels from database.");
+                _logger.LogInformation($"No specific destination provided. Querying all hotels.");
             }
 
+            int totalItemCount = await query.CountAsync();
+
+            var hotelsFromDb = await query
+                                    .Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync();
+
+            _logger.LogInformation($"Retrieved {hotelsFromDb.Count} hotels for page {pageNumber}.");
+
+            var hotelResults = new List<HotelResultViewModel>();
             foreach (var hotel in hotelsFromDb)
             {
                 hotelResults.Add(new HotelResultViewModel
                 {
-                    Id = hotel.Id, 
+                    Id = hotel.Id,
                     HotelName = hotel.Name,
                     ImageUrl = hotel.ImagePath,
                     StarRating = hotel.StarRating,
                     LocationName = $"{hotel.City}, {hotel.Country}",
-                    DistanceFromCenter = "N/A",
                     ReviewScore = (decimal)(hotel.ReviewScore ?? 0.0),
                     ReviewScoreText = GetReviewText((decimal)(hotel.ReviewScore ?? 0.0)),
-                    ReviewCount = 0,
                     PricePerNight = hotel.PricePerNight,
-                    CurrencySymbol = "BGN"
+                    CurrencySymbol = "BGN", 
                 });
             }
 
@@ -632,7 +642,11 @@ namespace Aryaans_Hotel_Booking.Controllers
                 SearchDestination = decodedDestination,
                 SearchDates = WebUtility.UrlDecode(selectedDates ?? "Any"),
                 SearchGuests = decodedGuests,
-                Results = hotelResults
+                Results = hotelResults,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalItemCount,
+                TotalPages = (int)Math.Ceiling(totalItemCount / (double)pageSize)
             };
 
             return View("Results", viewModel);

@@ -1,60 +1,357 @@
-﻿@model Aryaans_Hotel_Booking.Models.HotelResultViewModel
+﻿@* File: Views/Shared/_HotelCard.cshtml *@
+@model Aryaans_Hotel_Booking.Models.HotelResultViewModel
+@using Microsoft.AspNetCore.Http // Required for Context.Session
 
-<div class="card mb-4 shadow-sm">
-    @if (!string.IsNullOrEmpty(Model.ImageUrl))
-    {
-        <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.HotelName" style="height: 225px; object-fit: cover;">
-    }
-    else
-    {
-        <img src="/images/hotels/default-hotel-placeholder.jpg" class="card-img-top" alt="Default Hotel Image" style="height: 225px; object-fit: cover;">
-    }
-    <div class="card-body">
-        <h5 class="card-title">@Model.HotelName</h5>
-        <p class="card-text"><small class="text-muted">@Model.LocationName</small></p>
+@{
+    // Determine user state for admin buttons
+    var cardUsername = Context.Session.GetString("Username");
+    var cardIsAdmin = !string.IsNullOrEmpty(cardUsername) && cardUsername.Equals("admin", StringComparison.OrdinalIgnoreCase);
 
-        @if (!string.IsNullOrEmpty(Model.DistanceFromCenter))
-        {
-            <p class="card-text"><small>@Model.DistanceFromCenter from center</small></p>
+    // Determine review badge color based on your theme
+    string reviewBadgeBgColor = "var(--card-muted-text, #b3c2cc)"; // Default
+    string reviewBadgeTextColor = "var(--card-bg, #1e1e1e)";     // Dark text for light badges
+
+    if (Model.ReviewScore >= 8.5m)
+    {
+        reviewBadgeBgColor = "var(--card-accent-primary, #74e5b2)";
+        reviewBadgeTextColor = "#121212"; // Ensure contrast
+    }
+    else if (Model.ReviewScore >= 7.0m)
+    {
+        reviewBadgeBgColor = "var(--card-accent-secondary, #a1d8f0)";
+        reviewBadgeTextColor = "#121212"; // Ensure contrast
+    }
+    else if (Model.ReviewScore > 0)
+    {
+        reviewBadgeBgColor = "#ffc107"; // Amber for neutral/okay scores
+        reviewBadgeTextColor = "#121212";
+    }
+}
+
+<style>
+    /* REFINED & THEMED HOTEL CARD STYLES */
+    .scoped-hotel-card-styles { /* Wrapper to help scope CSS variables if needed */
+        --card-bg: #1e1e1e; /* Dark background like auth pages */
+        --card-border-color: #333; /* Border like auth pages */
+        --card-text-primary: #f1f3f5; /* --ahb-light-text */
+        --card-text-secondary: #b3c2cc; /* --ahb-muted-text */
+        --card-accent-primary: #74e5b2; /* --ahb-primary-color */
+        --card-accent-secondary: #a1d8f0; /* --ahb-secondary-color */
+        --card-button-glow: rgba(116, 229, 178, 0.25); /* --ahb-button-glow */
+        --card-star-color: #ffc107; /* Standard gold for stars */
+        --card-shadow-color: rgba(0, 0, 0, 0.3);
+        --card-hover-shadow-color: rgba(0, 0, 0, 0.5);
+        --card-edit-bg: #007bff; /* Bootstrap primary blue for Edit - can be themed */
+        --card-edit-text: #fff;
+        --card-delete-bg: #dc3545; /* Bootstrap danger red for Delete */
+        --card-delete-text: #fff;
+    }
+
+    .themed-hotel-card {
+        background-color: var(--card-bg);
+        color: var(--card-text-primary);
+        border-radius: 8px; /* Subtler rounding */
+        overflow: hidden;
+        position: relative;
+        border: 1px solid var(--card-border-color);
+        box-shadow: 0 4px 12px var(--card-shadow-color);
+        transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Align with auth page font */
+        animation: cardFadeIn 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    @@keyframes cardFadeIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    /* Subtle hover effect */
+    .themed-hotel-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px var(--card-hover-shadow-color), 0 0 10px var(--card-button-glow);
+    }
+
+    .themed-card-image-wrapper {
+        height: 220px; /* Slightly reduced height */
+        overflow: hidden;
+        position: relative;
+    }
+
+    .themed-card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease-out, filter 0.3s ease-out;
+    }
+
+    .themed-hotel-card:hover .themed-card-image {
+        transform: scale(1.08); /* More subtle zoom */
+        filter: brightness(1.05); /* Slight brightness increase */
+    }
+    /* Removed shine overlay for subtlety */
+
+    .themed-card-content {
+        padding: 20px; /* Consistent padding */
+    }
+
+    .themed-hotel-name {
+        font-size: 1.5rem; /* Scaled down */
+        font-weight: 600; /* Segoe UI bold */
+        color: var(--card-accent-primary); /* Use theme primary for name */
+        margin-bottom: 8px;
+        letter-spacing: 0.2px;
+        transition: color 0.3s ease;
+    }
+
+    .themed-hotel-card:hover .themed-hotel-name {
+        color: var(--card-accent-secondary); /* Change to secondary on hover */
+    }
+
+    .themed-hotel-location {
+        font-size: 0.9rem;
+        color: var(--card-text-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+        .themed-hotel-location::before { /* Simple text pin, less obtrusive */
+            content: ' L '; /* Placeholder, can be replaced with a very simple SVG or kept as text */
+            font-weight: bold;
+            margin-right: 6px;
+            color: var(--card-accent-secondary);
+            font-size: 0.9em;
+            border: 1px solid var(--card-accent-secondary);
+            border-radius: 3px;
+            padding: 0 2px;
+            line-height: 1;
         }
 
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="badge bg-warning text-dark">@Model.StarRating <i class="fas fa-star"></i></span>
-            @if (Model.ReviewScore > 0)
+    .themed-rating-price-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .themed-star-rating .star {
+        display: inline-block;
+        font-size: 1.1em; /* Scaled down */
+        color: #444; /* Darker unfilled star on dark theme */
+        position: relative;
+        transition: color 0.3s ease; /* Color transition on hover */
+    }
+
+        .themed-star-rating .star.filled {
+            color: var(--card-star-color);
+        }
+
+    .themed-hotel-card:hover .themed-star-rating .star.filled {
+        text-shadow: 0 0 5px var(--card-star-color); /* Subtle glow */
+    }
+
+
+    .themed-review-score {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 4px; /* Sharper badge */
+        font-weight: 500;
+        /* Background and text color set dynamically */
+    }
+
+    .themed-price-per-night {
+        font-size: 1.4rem; /* Scaled down */
+        font-weight: 600;
+        color: var(--card-text-primary);
+    }
+
+        .themed-price-per-night .currency { /* Class for currency symbol */
+            color: var(--card-accent-primary);
+        }
+
+        .themed-price-per-night .per-night-text {
+            font-size: 0.75em;
+            color: var(--card-text-secondary);
+            font-weight: 400;
+        }
+
+
+    .themed-recommended-rooms {
+        font-size: 0.8rem;
+        color: var(--card-text-secondary);
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+
+        .themed-recommended-rooms strong {
+            color: var(--card-text-primary);
+        }
+
+        .themed-recommended-rooms .badge {
+            background-color: rgba(116, 229, 178, 0.1); /* Transparent primary */
+            color: var(--card-accent-primary);
+            border: 1px solid var(--card-accent-primary);
+            padding: 4px 7px;
+            margin-right: 5px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+    .themed-details-button-wrapper {
+        margin-top: 20px;
+        text-align: right; /* Align button to the right */
+    }
+
+    .themed-details-button {
+        display: inline-block;
+        padding: 8px 20px; /* Scaled down padding */
+        background-color: var(--card-accent-primary);
+        color: #121212; /* Dark text for contrast on primary */
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 5px;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px var(--card-button-glow);
+    }
+
+        .themed-details-button:hover, .themed-details-button:focus {
+            background-color: var(--card-accent-secondary);
+            color: #121212; /* Dark text for contrast on secondary */
+            border-color: var(--card-accent-secondary);
+            box-shadow: 0 4px 8px var(--card-button-glow);
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+    /* Admin Buttons Area */
+    .admin-actions-bar {
+        border-top: 1px solid var(--card-border-color);
+        margin-top: 15px;
+        padding-top: 15px;
+        display: flex;
+        justify-content: flex-end; /* Align buttons to the right */
+        gap: 10px; /* Space between buttons */
+    }
+
+    .admin-action-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid transparent;
+    }
+
+        .admin-action-btn.edit-btn {
+            background-color: var(--card-edit-color, #007bff);
+            color: var(--card-edit-text, #fff);
+            border-color: var(--card-edit-color, #007bff);
+        }
+
+            .admin-action-btn.edit-btn:hover {
+                background-color: #0056b3; /* Darker shade */
+                border-color: #0056b3;
+                transform: scale(1.05);
+            }
+
+        .admin-action-btn.delete-btn {
+            background-color: transparent;
+            color: var(--card-danger-color, #dc3545);
+            border-color: var(--card-danger-color, #dc3545);
+        }
+
+            .admin-action-btn.delete-btn:hover {
+                background-color: var(--card-danger-color, #dc3545);
+                color: var(--card-delete-text, #fff);
+                transform: scale(1.05);
+            }
+    /* Removed diamond corner for subtlety */
+
+</style>
+
+<div class="scoped-hotel-card-styles">
+    <div class="themed-hotel-card">
+        <div class="themed-card-image-wrapper">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
             {
-                <span class="badge
-                    @(Model.ReviewScore >= 8.5m ? "bg-success" : Model.ReviewScore >= 7.0m ? "bg-info" : "bg-secondary")">
-                    @Model.ReviewScore.ToString("0.0") @(!string.IsNullOrEmpty(Model.ReviewScoreText) ? Model.ReviewScoreText : "")
-                    (@Model.ReviewCount reviews)
-                </span>
+                <img src="@Model.ImageUrl" class="themed-card-image" alt="@Model.HotelName">
+            }
+            else
+            {
+                <img src="/images/hotels/default-hotel-placeholder.jpg" class="themed-card-image" alt="Default Hotel Image">
             }
         </div>
 
-        <p class="card-text h5">
-            <strong>@Model.CurrencySymbol @Model.PricePerNight.ToString("F2")</strong>
-            <small class="text-muted">/ night</small>
-        </p>
+        <div class="themed-card-content">
+            <h3 class="themed-hotel-name">@Model.HotelName</h3>
 
-        @if (Model.RecommendedRooms != null && Model.RecommendedRooms.Any())
-        {
-            <div class="mt-2">
-                <small><strong>Popular rooms:</strong></small>
-                <ul class="list-unstyled list-inline mb-0">
-                    @foreach (var room in Model.RecommendedRooms.Take(2)) 
+            <p class="themed-hotel-location">@Model.LocationName</p>
+
+            <div class="themed-rating-price-container">
+                <div class="themed-star-rating">
+                    @for (int i = 1; i <= 5; i++)
                     {
-                        <li class="list-inline-item"><span class="badge bg-light text-dark">@room.RoomTypeName</span></li> 
+                        <span class="star @(i <= Model.StarRating ? "filled" : "")" title="@i star">☆</span> @* Use ☆ and style .filled for color *@
                     }
-                </ul>
+                </div>
+                @if (Model.ReviewScore > 0)
+                {
+                    <span class="themed-review-score" style="background-color: @reviewBadgeBgColor; color: @reviewBadgeTextColor;">
+                        @Model.ReviewScore.ToString("0.0")
+                        @if (!string.IsNullOrEmpty(Model.ReviewScoreText))
+                        {
+                            <text> </text> @Model.ReviewScoreText
+                        }
+                        (@Model.ReviewCount rev.)
+                    </span>
+                }
             </div>
-        }
 
-        @if (!string.IsNullOrEmpty(Model.AvailabilityUrl))
-        {
-            <a href="@Model.AvailabilityUrl" class="btn btn-primary mt-3 w-100">View Availability</a>
-        }
-        else
-        {
-            <a asp-controller="Hotel" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary mt-3 w-100">View Details</a>
-        }
+            <p class="themed-price-per-night">
+                <span class="currency">@Model.CurrencySymbol</span> @Model.PricePerNight.ToString("F2")
+                <span class="per-night-text">/ night</span>
+            </p>
+
+            @if (Model.RecommendedRooms != null && Model.RecommendedRooms.Any())
+            {
+                <div class="themed-recommended-rooms">
+                    <strong>Popular Rooms:</strong>
+                    @foreach (var room in Model.RecommendedRooms.Take(2))
+                    {
+                        <span class="badge">@room.RoomTypeName</span>
+                    }
+                </div>
+            }
+
+            <div class="themed-details-button-wrapper">
+                @if (!string.IsNullOrEmpty(Model.AvailabilityUrl))
+                {
+                    <a href="@Model.AvailabilityUrl" class="themed-details-button">View Availability</a>
+                }
+                else
+                {
+                    <a asp-controller="Home" asp-action="BookingDetails"
+                       asp-route-hotelName="@Model.HotelName"
+                       asp-route-selectedDates="@ViewContext.HttpContext.Request.Query["selectedDates"]"
+                       class="themed-details-button">View Details</a>
+                }
+            </div>
+
+            @if (cardIsAdmin)
+            {
+                <div class="admin-actions-bar">
+                    <a asp-controller="Home" asp-action="EditHotel" asp-route-id="@Model.Id" class="admin-action-btn edit-btn">Edit</a>
+
+                    <a asp-controller="Home" asp-action="DeleteHotel" asp-route-id="@Model.Id" class="admin-action-btn delete-btn">Delete</a>
+
+                  
+                </div>
+            }
+        </div>
     </div>
 </div>
