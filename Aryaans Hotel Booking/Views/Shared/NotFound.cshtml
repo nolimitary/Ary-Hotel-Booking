@@ -1,0 +1,142 @@
+﻿@model Aryaans_Hotel_Booking.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Page Not Found";
+    Layout = "_Layout";
+}
+
+<style>
+    .error-page-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        text-align: center;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+
+    .error-visual {
+        margin-bottom: 20px;
+    }
+
+    .magnifying-glass {
+        width: 60px;
+        height: 60px;
+        border: 5px solid #3498db;
+        border-radius: 50%;
+        position: relative;
+        animation: searchSweep 4s linear infinite;
+    }
+
+        .magnifying-glass::after {
+            content: '';
+            width: 8px;
+            height: 25px;
+            background: #3498db;
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            border-radius: 3px;
+        }
+
+    @@keyframes searchSweep {
+        0% {
+            transform: rotate(0deg) translateX(0px);
+        }
+
+        25% {
+            transform: rotate(15deg) translateX(10px);
+        }
+
+        50% {
+            transform: rotate(0deg) translateX(0px);
+        }
+
+        75% {
+            transform: rotate(-15deg) translateX(-10px);
+        }
+
+        100% {
+            transform: rotate(0deg) translateX(0px);
+        }
+    }
+
+    .question-mark {
+        font-size: 3rem;
+        color: #bdc3c7;
+        position: absolute;
+        top: 10px;
+        left: 70px;
+        animation: float 3s ease-in-out infinite alternate;
+    }
+
+    @@keyframes float {
+        from {
+            transform: translateY(-5px);
+        }
+
+        to {
+            transform: translateY(5px);
+        }
+    }
+
+    .error-code {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #e74c3c;
+    }
+
+    .error-page-container h2 {
+        font-size: 1.8rem;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container p {
+        font-size: 1rem;
+        color: #555;
+        max-width: 450px;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container .text-muted {
+        color: #95a5a6 !important;
+    }
+
+    .error-page-container .btn-home {
+        background-color: #74e5b2;
+        color: #fff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+        .error-page-container .btn-home:hover {
+            background-color: #5fcaa1;
+            color: #fff;
+        }
+</style>
+
+<div class="error-page-container">
+    <div class="error-visual" title="Searching...">
+        <div class="magnifying-glass"></div>
+        <span class="question-mark" style="position: relative; left: 50px; top: -50px;">?</span>
+    </div>
+    <div class="error-code">@Model.StatusCode</div>
+    <h2>@ViewData["Title"]</h2>
+    <p>@Model.Message</p>
+    @if (!string.IsNullOrEmpty(Model.OriginalPath))
+    {
+        <p class="text-muted small">You tried to go to: <code>@Model.OriginalPath</code></p>
+    }
+    <a asp-controller="Home" asp-action="Index" class="btn-home">Go to Homepage</a>
+    @if (Model.ShowRequestId)
+    {
+        <p class="text-muted small mt-3">Request ID: @Model.RequestId</p>
+    }
+</div>

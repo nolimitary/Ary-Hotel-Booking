@@ -9,6 +9,8 @@ using System.Net;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Diagnostics;
+
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
@@ -54,6 +56,59 @@ namespace Aryaans_Hotel_Booking.Controllers
                 });
             }
             return View(featuredHotelViewModels);
+        }
+
+
+        [Route("/Home/HandleError/{statusCode}")] 
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult HandleError(int statusCode)
+        {
+            var statusCodeResult = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
+
+            var viewModel = new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                StatusCode = statusCode,
+                OriginalPath = statusCodeResult?.OriginalPath 
+            };
+
+            switch (statusCode)
+            {
+                case 400:
+                    ViewData["Title"] = "Bad Request";
+                    viewModel.Message = "Oops! It seems like your request was a bit jumbled. Our server couldn't understand it.";
+                    return View("BadRequest", viewModel);
+                case 401:
+                    ViewData["Title"] = "Unauthorized";
+                    viewModel.Message = "Whoops! You need to be logged in to see this page. It's a secret handshake kind of deal.";
+                    return View("Unauthorized", viewModel);
+                case 403:
+                    ViewData["Title"] = "Forbidden";
+                    viewModel.Message = "Access Denied! It looks like you don't have the secret key for this door.";
+                    return View("Forbidden", viewModel);
+                case 404:
+                    ViewData["Title"] = "Page Not Found";
+                    viewModel.Message = "Oh no! It looks like this page went on an adventure and got lost.";
+                    return View("NotFound", viewModel);
+                default:
+                    ViewData["Title"] = $"Error {statusCode}";
+                    viewModel.Message = $"Hmm, something unexpected happened (Error {statusCode}). We're not quite sure what!";
+                    return View("GenericError", viewModel);
+            }
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() 
+        {
+            var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            _logger.LogError(exceptionHandlerPathFeature?.Error, "Unhandled exception at path: {Path}", exceptionHandlerPathFeature?.Path);
+
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                Message = "An unexpected internal error occurred. We're looking into it!",
+                StatusCode = HttpContext.Response.StatusCode 
+            });
         }
 
         public IActionResult DatePicker()
@@ -617,10 +672,7 @@ namespace Aryaans_Hotel_Booking.Controllers
         public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        
 
         [HttpGet]
         public async Task<IActionResult> DeleteHotel(int? id)

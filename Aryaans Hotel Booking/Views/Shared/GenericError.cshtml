@@ -1,0 +1,99 @@
+﻿@model Aryaans_Hotel_Booking.Models.ErrorViewModel
+@{
+    ViewData["Title"] = $"Error {Model.StatusCode}";
+    Layout = "_Layout";
+}
+
+<style>
+    .error-page-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        text-align: center;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+
+    .error-visual {
+        font-size: 5rem;
+        color: #95a5a6; /* Grey for general sadness */
+        margin-bottom: 20px;
+        animation: headShake 2s ease-in-out infinite;
+        display: inline-block;
+    }
+
+    @@keyframes headShake {
+        0% {
+            transform: translateX(0) rotate(0);
+        }
+
+        20% {
+            transform: translateX(-5px) rotate(-3deg);
+        }
+
+        40% {
+            transform: translateX(5px) rotate(3deg);
+        }
+
+        60% {
+            transform: translateX(-5px) rotate(-3deg);
+        }
+
+        80% {
+            transform: translateX(5px) rotate(3deg);
+        }
+
+        100% {
+            transform: translateX(0) rotate(0);
+        }
+    }
+
+    .error-code {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #e74c3c;
+    }
+
+    .error-page-container h2 {
+        font-size: 1.8rem;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container p {
+        font-size: 1rem;
+        color: #555;
+        max-width: 450px;
+        margin-bottom: 25px;
+    }
+
+    .error-page-container .btn-home {
+        background-color: #74e5b2;
+        color: #fff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+        .error-page-container .btn-home:hover {
+            background-color: #5fcaa1;
+            color: #fff;
+        }
+</style>
+
+<div class="error-page-container">
+    <div class="error-visual" title="Uh oh!">: (</div> @* Simple text sad face *@
+    <div class="error-code">@Model.StatusCode</div>
+    <h2>A Little Glitch!</h2>
+    <p>@Model.Message</p>
+    <a asp-controller="Home" asp-action="Index" class="btn-home">Go to Homepage</a>
+    @if (Model.ShowRequestId)
+    {
+        <p class="text-muted small mt-3">Request ID: @Model.RequestId</p>
+    }
+</div>

@@ -1,0 +1,98 @@
+﻿@model Aryaans_Hotel_Booking.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Access Forbidden";
+    Layout = "_Layout";
+}
+
+<style>
+    .error-page-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        text-align: center;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+
+    .error-visual {
+        width: 100px;
+        height: 100px;
+        background-color: #f39c12; /* Orange for warning */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        animation: pulseWarning 1.5s infinite;
+    }
+
+    .error-visual-hand {
+        font-size: 3rem;
+        color: white;
+        transform: rotate(-25deg);
+    }
+    /* Simple text hand */
+    @@keyframes pulseWarning {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7);
+        }
+
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(243, 156, 18, 0);
+        }
+    }
+
+    .error-code {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #e74c3c;
+    }
+
+    .error-page-container h2 {
+        font-size: 1.8rem;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container p {
+        font-size: 1rem;
+        color: #555;
+        max-width: 450px;
+        margin-bottom: 25px;
+    }
+
+    .error-page-container .btn-home {
+        background-color: #74e5b2;
+        color: #fff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+        .error-page-container .btn-home:hover {
+            background-color: #5fcaa1;
+            color: #fff;
+        }
+</style>
+
+<div class="error-page-container">
+    <div class="error-visual" title="Stop Hand">
+        <span class="error-visual-hand">✋</span> @* Using an actual hand emoji here as CSS hand is complex, can be replaced with text 'STOP' or a simpler CSS shape if emoji strictly forbidden. For text: 'VIP' or 'NO' *@
+    </div>
+    <div class="error-code">@Model.StatusCode</div>
+    <h2>@ViewData["Title"]</h2>
+    <p>@Model.Message</p>
+    <p>It seems you have the keys to the building, but not for this particular room!</p>
+    <a asp-controller="Home" asp-action="Index" class="btn-home">Go to Homepage</a>
+    @if (Model.ShowRequestId)
+    {
+        <p class="text-muted small mt-3">Request ID: @Model.RequestId</p>
+    }
+</div>

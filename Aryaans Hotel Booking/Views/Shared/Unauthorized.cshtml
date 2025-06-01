@@ -1,0 +1,121 @@
+﻿@model Aryaans_Hotel_Booking.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Unauthorized";
+    Layout = "_Layout";
+}
+
+<style>
+    .error-page-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        text-align: center;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+
+    .error-visual {
+        width: 80px;
+        height: 100px;
+        border: 3px solid #3498db;
+        border-radius: 10px;
+        position: relative;
+        margin-bottom: 20px;
+        animation: doorKnock 1.5s ease-in-out infinite;
+    }
+
+        .error-visual::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #2c3e50;
+            border-radius: 50%;
+            position: absolute;
+            top: 45px;
+            right: 15px;
+        }
+        /* Doorknob */
+        .error-visual::after {
+            content: 'LOGIN';
+            font-size: 0.6em;
+            color: #3498db;
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+        }
+
+    @@keyframes doorKnock {
+        0%, 100% {
+            transform: rotate(0deg);
+        }
+
+        10%, 30% {
+            transform: rotate(-2deg);
+        }
+
+        20%, 40% {
+            transform: rotate(2deg);
+        }
+
+        50% {
+            transform: rotate(0deg);
+        }
+    }
+
+    .error-code {
+        font-size: 5rem;
+        font-weight: bold;
+        color: #e74c3c;
+    }
+
+    .error-page-container h2 {
+        font-size: 1.8rem;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container p {
+        font-size: 1rem;
+        color: #555;
+        max-width: 450px;
+        margin-bottom: 10px;
+    }
+
+    .error-page-container .btn-login, .error-page-container .btn-home {
+        background-color: #74e5b2;
+        color: #fff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        margin: 5px;
+        display: inline-block;
+    }
+
+        .error-page-container .btn-login:hover, .error-page-container .btn-home:hover {
+            background-color: #5fcaa1;
+            color: #fff;
+        }
+</style>
+
+<div class="error-page-container">
+    <div class="error-visual" title="Locked Door"></div>
+    <div class="error-code">@Model.StatusCode</div>
+    <h2>@ViewData["Title"]</h2>
+    <p>@Model.Message</p>
+    <p>You might need to sign in to see this page.</p>
+    <div>
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.OriginalPath" class="btn-login">Login</a>
+        <a asp-controller="Home" asp-action="Index" class="btn-home">Go to Homepage</a>
+    </div>
+    @if (Model.ShowRequestId)
+    {
+        <p class="text-muted small mt-3">Request ID: @Model.RequestId</p>
+    }
+</div>

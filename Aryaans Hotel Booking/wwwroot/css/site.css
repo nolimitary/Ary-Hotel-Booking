@@ -20,3 +20,153 @@ html {
 body {
   margin-bottom: 60px;
 }
+.error-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    text-align: center;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.error-animation {
+    width: 150px; /* Adjust size as needed */
+    height: 150px; /* Adjust size as needed */
+    margin-bottom: 30px;
+    /* Common animation properties can go here if any */
+}
+
+/* Example: Simple "bobbing" animation */
+@@keyframes bobbing {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: bold;
+    color: #e74c3c; /* Example error color */
+}
+
+.error-page-container h2 {
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #34495e;
+}
+
+.error-page-container p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    max-width: 500px;
+    margin-bottom: 25px;
+}
+
+.error-page-container .btn-home {
+    background-color: var(--ahb-primary-color, #74e5b2); /* Use your theme color */
+    color: #fff;
+    padding: 10px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+    .error-page-container .btn-home:hover {
+        background-color: var(--ahb-secondary-color, #5cb85c); /* Darker shade or secondary theme color */
+        color: #fff;
+    }
+
+/* Specific Animation Styles */
+.animation-bad-request .icon-paper { /* For 400 */
+    font-size: 5em;
+    transform-origin: bottom center;
+    animation: shakePaper 0.5s infinite alternate;
+}
+
+@@keyframes shakePaper {
+    from {
+        transform: rotate(-5deg);
+    }
+
+    to {
+        transform: rotate(5deg);
+    }
+}
+
+.animation-unauthorized .icon-door { /* For 401 */
+    font-size: 5em;
+    animation: doorSlam 1s ease-in-out;
+}
+
+@@keyframes doorSlam {
+    0% {
+        transform: rotateY(0);
+    }
+
+    50% {
+        transform: rotateY(-30deg);
+    }
+
+    100% {
+        transform: rotateY(0);
+    }
+}
+
+.animation-forbidden .icon-shield { /* For 403 */
+    font-size: 5em;
+    animation: shieldBlock 0.5s ease-out;
+}
+
+@@keyframes shieldBlock {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animation-not-found .icon-magnify { /* For 404 */
+    font-size: 5em;
+    animation: searchLoop 2s infinite linear;
+}
+
+@@keyframes searchLoop {
+    0%, 100% {
+        transform: rotate(0deg) translateX(5px) rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(10deg) translateX(-5px) rotate(-10deg);
+    }
+}
+
+.animation-generic-error .icon-sad-face { /* For Generic */
+    font-size: 5em;
+    animation: sadWiggle 1.5s infinite ease-in-out;
+}
+
+@@keyframes sadWiggle {
+    0%, 100% {
+        transform: rotate(0);
+    }
+
+    25% {
+        transform: rotate(-3deg);
+    }
+
+    75% {
+        transform: rotate(3deg);
+    }
+}
