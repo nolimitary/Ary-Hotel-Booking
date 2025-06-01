@@ -2,22 +2,26 @@
 using Aryaans_Hotel_Booking.Data.Entities;
 using Aryaans_Hotel_Booking.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(ApplicationDbContext context, ILogger<AccountController> logger)
+        public AccountController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            ILogger<AccountController> logger)
         {
-            _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
             _logger = logger;
         }
 
@@ -33,19 +37,19 @@ namespace Aryaans_Hotel_Booking.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model) 
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
-
+                var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user != null)
                 {
-                    if (BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: false);
+                    if (result.Succeeded)
                     {
                         _logger.LogInformation($"User {model.Email} logged in successfully.");
                         TempData["SuccessMessage"] = "Login successful! Welcome back.";
-                        HttpContext.Session.SetString("Username", user.Username);
+                        HttpContext.Session.SetString("Username", user.UserName);
 
                         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                         {
@@ -53,18 +57,28 @@ namespace Aryaans_Hotel_Booking.Controllers
                         }
                         return RedirectToAction("Index", "Home");
                     }
+                    if (result.IsLockedOut)
+                    {
+                        _logger.LogWarning($"User {model.Email} account locked out.");
+                        ModelState.AddModelError(string.Empty, "This account has been locked out, please try again later.");
+                        return View(model);
+                    }
                 }
-                _logger.LogWarning($"Login attempt failed for user {model.Email}. Invalid credentials.");
+                _logger.LogWarning($"Login attempt failed for user {model.Email}. Invalid credentials or user not found.");
                 ModelState.AddModelError(string.Empty, "Invalid login attempt. Please check your email and password.");
             }
             return View(model);
         }
 
-        [HttpGet]
-        public IActionResult Logout()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
         {
+            var userNameForLog = User.Identity?.Name ?? HttpContext.Session.GetString("Username") ?? "Unknown user";
+            await _signInManager.SignOutAsync();
             HttpContext.Session.Remove("Username");
             TempData["SuccessMessage"] = "You have been successfully logged out.";
+            _logger.LogInformation($"User {userNameForLog} logged out.");
             return RedirectToAction("Index", "Home");
         }
 
@@ -78,81 +92,32 @@ namespace Aryaans_Hotel_Booking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            _logger.LogInformation("--- Register POST action started ---");
-            _logger.LogInformation($"Attempting to register with Username: '{model.Username}', Email: '{model.Email}'");
-
+            _logger.LogInformation($"Registration attempt for {model.Email}.");
             if (ModelState.IsValid)
             {
-                _logger.LogInformation("Basic client-side style validations passed. Checking database for existing email/username.");
-                bool emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email);
-                if (emailExists)
+                var user = new ApplicationUser
                 {
-                    ModelState.AddModelError("Email", "An account with this email already exists.");
-                    _logger.LogWarning($"Register validation FAILED: Email '{model.Email}' already exists in DB.");
+                    UserName = model.Username,
+                    Email = model.Email
+                };
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation($"User {model.Email} (Username: {model.Username}) created a new account.");
+
+
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email if confirmation is required, then log in.";
+                    return RedirectToAction("Login");
                 }
-
-                bool usernameExists = await _context.Users.AnyAsync(u => u.Username == model.Username);
-                if (usernameExists)
+                foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError("Username", "This username is already taken. Please choose another one.");
-                    _logger.LogWarning($"Register validation FAILED: Username '{model.Username}' already exists in DB.");
-                }
-
-                if (!emailExists && !usernameExists)
-                {
-                    _logger.LogInformation("--- ModelState is VALID and no existing user found. Proceeding to create and save user. ---");
-                    var user = new User
-                    {
-                        Username = model.Username,
-                        Email = model.Email,
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password)
-                    };
-
-                    try
-                    {
-                        _logger.LogInformation("Adding user to context...");
-                        _context.Users.Add(user);
-                        _logger.LogInformation("Calling SaveChangesAsync...");
-                        int changes = await _context.SaveChangesAsync();
-                        _logger.LogInformation($"SaveChangesAsync completed. {changes} state entries written to the database.");
-
-                        if (changes > 0)
-                        {
-                            _logger.LogInformation($"User '{model.Email}' (Username: '{model.Username}') registered successfully. New User ID: {user.Id}");
-                            TempData["SuccessMessage"] = "Registration successful! You can now log in.";
-                            return RedirectToAction("Login");
-                        }
-                        else
-                        {
-                            _logger.LogWarning("SaveChangesAsync reported 0 changes. User might not have been saved.");
-                            ModelState.AddModelError(string.Empty, "Could not save the user. Please try again.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "--- EXCEPTION during SaveChangesAsync or user creation. ---");
-                        ModelState.AddModelError(string.Empty, "An unexpected error occurred while registering. Please try again.");
-                        _logger.LogError($"Exception Details: {ex.ToString()}");
-                        if (ex.InnerException != null)
-                        {
-                            _logger.LogError($"Inner Exception Details: {ex.InnerException.ToString()}");
-                        }
-                    }
+                    ModelState.AddModelError(string.Empty, error.Description);
+                    _logger.LogWarning($"Registration error for {model.Email}: {error.Description}");
                 }
             }
 
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("--- ModelState is INVALID. Returning View with errors. ---");
-                foreach (var modelStateKey in ModelState.Keys)
-                {
-                    var modelStateVal = ModelState[modelStateKey];
-                    foreach (var error in modelStateVal.Errors)
-                    {
-                        _logger.LogWarning($"ModelState Error -> Key: '{modelStateKey}', Error: '{error.ErrorMessage}'");
-                    }
-                }
-            }
+            _logger.LogWarning($"Registration failed for {model.Email}. ModelState Invalid or user creation failed.");
             return View(model);
         }
     }
