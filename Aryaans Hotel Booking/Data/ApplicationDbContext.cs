@@ -50,10 +50,7 @@ namespace Aryaans_Hotel_Booking.Data
                       .HasForeignKey(b => b.HotelId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasData(
-                    new Hotel { Id = 1, Name = "Grand Hyatt", Address = "123 Luxury Lane", City = "New York", Country = "USA", Description = "A luxurious hotel in the heart of the city.", PricePerNight = 300.00m, StarRating = 5, ReviewScore = 8.8, ImagePath = "/images/hotels/grand_hyatt.jpg" },
-                    new Hotel { Id = 2, Name = "The Plaza", Address = "768 Fifth Avenue", City = "New York", Country = "USA", Description = "Iconic luxury hotel with a rich history.", PricePerNight = 500.00m, StarRating = 5, ReviewScore = 9.2, ImagePath = "/images/hotels/the_plaza.jpg" }
-                );
+                
             });
 
             builder.Entity<Room>(entity =>
@@ -72,11 +69,7 @@ namespace Aryaans_Hotel_Booking.Data
                       .HasForeignKey(r => r.HotelId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasData(
-                    new Room { Id = 1, HotelId = 1, RoomNumber = "101", RoomType = "Deluxe King", Description = "Spacious room with a king-sized bed and city view.", PricePerNight = 450.00m, Capacity = 2, IsAvailable = true, Amenities = "WiFi, TV, AC, Minibar" },
-                    new Room { Id = 2, HotelId = 1, RoomNumber = "102", RoomType = "Standard Queen", Description = "Comfortable room with a queen-sized bed.", PricePerNight = 350.00m, Capacity = 2, IsAvailable = false, Amenities = "WiFi, TV, AC" },
-                    new Room { Id = 3, HotelId = 2, RoomNumber = "201", RoomType = "Plaza Suite", Description = "Luxurious suite with a separate living area and premium amenities.", PricePerNight = 799.99m, Capacity = 4, IsAvailable = true, Amenities = "WiFi, TV, AC, Minibar, Jacuzzi" }
-                );
+               
             });
 
             builder.Entity<Booking>(entity =>

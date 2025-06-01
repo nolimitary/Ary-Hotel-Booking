@@ -26,7 +26,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddResponseCaching();
-
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -38,6 +37,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -52,15 +52,20 @@ using (var scope = app.Services.CreateScope())
         await context.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied (or database up-to-date).");
 
-        logger.LogInformation("Attempting to seed hotel data via HotelDataSeeder...");
-        await HotelDataSeeder.SeedHotelsAsync(context, webHostEnvironment);
-        logger.LogInformation("Hotel data seeding process via HotelDataSeeder completed.");
+        //logger.LogInformation("Attempting to seed hotel data via HotelDataSeeder...");
+        //await HotelDataSeeder.SeedHotelsAsync(context, webHostEnvironment);
+        //logger.LogInformation("Hotel data seeding process via HotelDataSeeder completed.");
+
+        logger.LogInformation("Attempting to seed Identity roles and admin user...");
+        await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
+        logger.LogInformation("Identity roles and admin user seeding process completed.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        logger.LogError(ex, "An error occurred during database migration or data seeding (including Identity).");
     }
 }
+
 
 if (!app.Environment.IsDevelopment())
 {

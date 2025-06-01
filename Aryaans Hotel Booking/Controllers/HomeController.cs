@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Aryaans_Hotel_Booking.Controllers
@@ -158,178 +159,104 @@ namespace Aryaans_Hotel_Booking.Controllers
 
         public IActionResult DestinationPicker() => View();
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult AddHotel()
         {
-            // Check if the user is an admin.
-            // The actual session key might be different based on your login implementation.
-            if (HttpContext.Session.GetString("Username") != "admin")
-            {
-                _logger.LogWarning("Non-admin user tried to access AddHotel GET page.");
-                // Return a 403 Forbidden status if the user is not authorized.
-                return Forbid();
-            }
-
-            // Return the view for adding a hotel.
-            // If you have a specific ViewModel for the AddHotel page (e.g., AddHotelViewModel),
-            // you might want to initialize and pass it here:
-            // return View(new AddHotelViewModel());
-            return View();
+            _logger.LogInformation("Admin user accessing AddHotel GET page.");
+            return View(new AddHotelViewModel());
         }
 
-        // POST: Home/AddHotel
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddHotel(
-            IFormFile? Image, // Image can be nullable if it's optional
-            string Name,
-            string Country,
-            string City,
-            string Address,
-            string Description,
-            int StarRating,
-            decimal ReviewScore,
-            decimal PricePerNight)
+        public async Task<IActionResult> AddHotel(AddHotelViewModel model)
         {
-            // Authorization check
-            if (HttpContext.Session.GetString("Username") != "admin")
-            {
-                _logger.LogWarning("Non-admin user tried to POST to AddHotel.");
-                return Forbid();
-            }
-
-            // Create an object to hold the form data, useful for repopulating the form if validation fails.
-            // This could be your Hotel entity or a specific AddHotelViewModel.
-            // Using Hotel entity here for simplicity, assuming the view can bind to its properties.
-            var hotelViewModelForFormRepopulation = new Hotel
-            {
-                Name = Name,
-                Country = Country,
-                City = City,
-                Address = Address,
-                Description = Description,
-                PricePerNight = PricePerNight,
-                StarRating = StarRating,
-                ReviewScore = (double)ReviewScore
-                // ImagePath will be set if an image is uploaded or if it's part of a more complex ViewModel
-            };
-
-            // Server-side validation based on model annotations (e.g., [Required])
+            _logger.LogInformation($"Admin user attempting to POST to AddHotel with hotel name: {model.Name}");
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("AddHotel POST request failed model validation.");
-                foreach (var entry in ModelState)
-                {
-                    if (entry.Value.Errors.Any())
-                    {
-                        _logger.LogWarning($"Field: {entry.Key}");
-                        foreach (var error in entry.Value.Errors)
-                        {
-                            _logger.LogWarning($"- Error: {error.ErrorMessage}");
-                        }
-                    }
-                }
-                // Return the view with the submitted data to repopulate the form and show validation errors.
-                return View(hotelViewModelForFormRepopulation);
+                return View(model);
             }
 
-            string? virtualImagePath = null; // Path to be stored in the database (URL path)
-
-            // Image processing logic
-            if (Image != null && Image.Length > 0)
+            string? virtualImagePath = null;
+            if (model.Image != null && model.Image.Length > 0)
             {
-                // Define the server-side folder path to save images.
-                // Path.Combine correctly uses backslashes on Windows for the physical path.
                 string serverUploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "hotels");
-
-                // Ensure the directory exists; create it if it doesn't.
                 Directory.CreateDirectory(serverUploadsFolder);
-
-                // Generate a unique file name to prevent overwriting existing files.
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(Image.FileName);
-
-                // Full physical path to the file on the server.
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.Image.FileName);
                 string serverFilePath = Path.Combine(serverUploadsFolder, uniqueFileName);
 
                 try
                 {
-                    // Save the uploaded image to the server.
                     using (var fileStream = new FileStream(serverFilePath, FileMode.Create))
                     {
-                        await Image.CopyToAsync(fileStream);
+                        await model.Image.CopyToAsync(fileStream);
                     }
-                    // Set the virtual path (URL path) for database storage and web access.
-                    // This path uses forward slashes, which is standard for URLs.
                     virtualImagePath = $"/images/hotels/{uniqueFileName}";
                     _logger.LogInformation($"Image '{uniqueFileName}' uploaded successfully to '{serverFilePath}'.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Error uploading image '{Image.FileName}'.");
+                    _logger.LogError(ex, $"Error uploading image '{model.Image.FileName}'.");
                     ModelState.AddModelError("Image", "Error uploading image. Please try again.");
-                    // Return the view with the model to repopulate form fields and show the error.
-                    return View(hotelViewModelForFormRepopulation);
+                    return View(model);
                 }
             }
 
-            // Create the Hotel entity to be saved to the database.
             var hotel = new Hotel
             {
-                Name = Name,
-                Country = Country,
-                City = City,
-                Address = Address,
-                Description = Description,
-                PricePerNight = PricePerNight,
-                StarRating = StarRating,
-                ReviewScore = (double)ReviewScore,
-                ImagePath = virtualImagePath // This can be null if no image was uploaded
+                Name = model.Name,
+                Country = model.Country,
+                City = model.City,
+                Address = model.Address,
+                Description = model.Description,
+                PricePerNight = model.PricePerNight,
+                StarRating = model.StarRating,
+                ReviewScore = (double)model.ReviewScore,
+                ImagePath = virtualImagePath
             };
 
             try
             {
                 _context.Hotels.Add(hotel);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Hotel '{hotel.Name}' (ID: {hotel.Id}) added to database by user {HttpContext.Session.GetString("Username")}.");
+                _logger.LogInformation($"Hotel '{hotel.Name}' (ID: {hotel.Id}) added to database by admin user.");
                 TempData["SuccessMessage"] = $"Hotel '{hotel.Name}' added successfully!";
             }
-            catch (DbUpdateException ex) 
+            catch (DbUpdateException ex)
             {
                 _logger.LogError(ex, $"Database error saving hotel '{hotel.Name}'. InnerException: {ex.InnerException?.Message}");
-                TempData["ErrorMessage"] = "Error saving hotel to database. Please check the data and try again. If the problem persists, contact support.";
-                return View(hotel);
+                TempData["ErrorMessage"] = "Error saving hotel to database. Please check the data and try again.";
+                return View(model);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 _logger.LogError(ex, $"Generic error saving hotel '{hotel.Name}'.");
                 TempData["ErrorMessage"] = "An unexpected error occurred while saving the hotel. Please try again.";
-                return View(hotel);
+                return View(model);
             }
 
-            return RedirectToAction("SearchResults", new { destination = Country });
+            return RedirectToAction("SearchResults", new { destination = hotel.Country });
         }
 
-
-        // GET: Home/EditHotel/5
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> EditHotel(int? id)
         {
-            if (HttpContext.Session.GetString("Username") != "admin")
-            {
-                _logger.LogWarning("Non-admin user tried to access EditHotel GET page.");
-                return Forbid();
-            }
-
             if (id == null)
             {
+                _logger.LogWarning("EditHotel GET called with null ID by admin.");
                 return NotFound();
             }
 
             var hotel = await _context.Hotels.FindAsync(id);
             if (hotel == null)
             {
+                _logger.LogWarning($"EditHotel GET: Hotel with ID {id} not found for admin edit.");
                 return NotFound();
             }
+            _logger.LogInformation($"Admin loading EditHotel page for Hotel ID {id}, Name: {hotel.Name}.");
 
             var viewModel = new EditHotelViewModel
             {
@@ -337,28 +264,24 @@ namespace Aryaans_Hotel_Booking.Controllers
                 Name = hotel.Name,
                 Country = hotel.Country,
                 City = hotel.City,
+                Address = hotel.Address,
+                Description = hotel.Description,
                 StarRating = hotel.StarRating,
                 PricePerNight = hotel.PricePerNight,
                 ReviewScore = (decimal)(hotel.ReviewScore ?? 0.0),
                 ExistingImagePath = hotel.ImagePath
             };
-
-            return View("EditHotel", viewModel); // We'll create EditHotel.cshtml
+            return View("EditHotel", viewModel);
         }
 
-        // POST: Home/EditHotel/5
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditHotel(int id, EditHotelViewModel viewModel, IFormFile? Image)
+        public async Task<IActionResult> EditHotel(int id, EditHotelViewModel viewModel)
         {
-            if (HttpContext.Session.GetString("Username") != "admin")
-            {
-                _logger.LogWarning("Non-admin user tried to POST to EditHotel.");
-                return Forbid();
-            }
-
             if (id != viewModel.Id)
             {
+                _logger.LogWarning($"EditHotel POST ID mismatch. Route ID: {id}, ViewModel ID: {viewModel.Id}.");
                 return NotFound();
             }
 
@@ -367,48 +290,46 @@ namespace Aryaans_Hotel_Booking.Controllers
                 var hotelToUpdate = await _context.Hotels.FindAsync(id);
                 if (hotelToUpdate == null)
                 {
+                    _logger.LogWarning($"EditHotel POST: Hotel with ID {id} not found for update.");
                     return NotFound();
                 }
 
                 hotelToUpdate.Name = viewModel.Name;
                 hotelToUpdate.Country = viewModel.Country;
                 hotelToUpdate.City = viewModel.City;
+                hotelToUpdate.Address = viewModel.Address;
+                hotelToUpdate.Description = viewModel.Description;
                 hotelToUpdate.StarRating = viewModel.StarRating;
                 hotelToUpdate.PricePerNight = viewModel.PricePerNight;
-                hotelToUpdate.ReviewScore = (double)viewModel.ReviewScore;
+                hotelToUpdate.ReviewScore = (double?)viewModel.ReviewScore;
 
-                if (Image != null && Image.Length > 0)
+                if (viewModel.NewImage != null && viewModel.NewImage.Length > 0)
                 {
-                    // Delete old image if it exists and is not a default placeholder
                     if (!string.IsNullOrEmpty(hotelToUpdate.ImagePath))
                     {
-                        string oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, hotelToUpdate.ImagePath.TrimStart('/'));
-                        if (System.IO.File.Exists(oldImagePath))
+                        string oldImagePathOnServer = Path.Combine(_webHostEnvironment.WebRootPath, hotelToUpdate.ImagePath.TrimStart('/'));
+                        if (System.IO.File.Exists(oldImagePathOnServer))
                         {
                             try
                             {
-                                System.IO.File.Delete(oldImagePath);
-                                _logger.LogInformation($"Old image '{oldImagePath}' deleted.");
+                                System.IO.File.Delete(oldImagePathOnServer);
+                                _logger.LogInformation($"Old image '{oldImagePathOnServer}' deleted.");
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, $"Error deleting old image '{oldImagePath}'.");
-                                // Log error but continue, as replacing image is main goal
+                                _logger.LogError(ex, $"Error deleting old image '{oldImagePathOnServer}'.");
                             }
                         }
                     }
-
-                    // Save new image
                     string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "hotels");
                     Directory.CreateDirectory(uploadsFolder);
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(Image.FileName);
-                    string newFilePath = Path.Combine(uploadsFolder, uniqueFileName);
-
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(viewModel.NewImage.FileName);
+                    string newFilePathOnServer = Path.Combine(uploadsFolder, uniqueFileName);
                     try
                     {
-                        using (var stream = new FileStream(newFilePath, FileMode.Create))
+                        using (var stream = new FileStream(newFilePathOnServer, FileMode.Create))
                         {
-                            await Image.CopyToAsync(stream);
+                            await viewModel.NewImage.CopyToAsync(stream);
                         }
                         hotelToUpdate.ImagePath = $"/images/hotels/{uniqueFileName}";
                         _logger.LogInformation($"New image '{uniqueFileName}' uploaded for hotel ID {hotelToUpdate.Id}.");
@@ -416,43 +337,49 @@ namespace Aryaans_Hotel_Booking.Controllers
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, $"Error uploading new image for hotel ID {hotelToUpdate.Id}.");
-                        ModelState.AddModelError("Image", "Error uploading new image. Please try again.");
-                        viewModel.ExistingImagePath = hotelToUpdate.ImagePath; // keep showing old image path if new upload fails
+                        ModelState.AddModelError("NewImage", "Error uploading new image. Please try again.");
+                        viewModel.ExistingImagePath = hotelToUpdate.ImagePath;
                         return View("EditHotel", viewModel);
                     }
                 }
-                // If no new image is uploaded, hotelToUpdate.ImagePath remains unchanged.
 
                 try
                 {
                     _context.Update(hotelToUpdate);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = $"Hotel '{hotelToUpdate.Name}' updated successfully!";
-                    _logger.LogInformation($"Hotel ID {hotelToUpdate.Id} ('{hotelToUpdate.Name}') updated by user {HttpContext.Session.GetString("Username")}.");
+                    _logger.LogInformation($"Hotel ID {hotelToUpdate.Id} ('{hotelToUpdate.Name}') updated by admin.");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!HotelExists(hotelToUpdate.Id))
                     {
+                        _logger.LogWarning($"EditHotel POST: Concurrency error, Hotel ID {hotelToUpdate.Id} not found.");
                         return NotFound();
                     }
                     else
                     {
                         _logger.LogError($"Concurrency error updating hotel ID {hotelToUpdate.Id}.");
-                        TempData["ErrorMessage"] = "Error updating hotel due to a concurrency issue. Please try again.";
-                        throw; // Re-throw for developer exception page or global handler
+                        TempData["ErrorMessage"] = "Error updating hotel. It might have been modified by another user. Please try again.";
+                        return View("EditHotel", viewModel);
                     }
                 }
                 return RedirectToAction(nameof(SearchResults), new { destination = hotelToUpdate.Country });
             }
-            // If ModelState is invalid, return to view with errors and existing image path
+
+            _logger.LogWarning($"EditHotel POST: ModelState is invalid for Hotel ID {id}.");
             if (string.IsNullOrEmpty(viewModel.ExistingImagePath) && id > 0)
             {
                 var existingHotel = await _context.Hotels.AsNoTracking().FirstOrDefaultAsync(h => h.Id == id);
-                if (existingHotel != null) viewModel.ExistingImagePath = existingHotel.ImagePath;
+                if (existingHotel != null)
+                {
+                    viewModel.ExistingImagePath = existingHotel.ImagePath;
+                }
             }
             return View("EditHotel", viewModel);
         }
+
+        private bool HotelExists(int id) => _context.Hotels.Any(e => e.Id == id);
 
 
         // POST: Home/DeleteHotel/5
@@ -720,10 +647,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             return "Okay";
         }
 
-        private bool HotelExists(int id)
-        {
-            return _context.Hotels.Any(e => e.Id == id);
-        }
+    
 
         public IActionResult Privacy() => View();
 
@@ -760,23 +684,17 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View(hotel);
         }
 
+        [Authorize(Roles = "Admin")] 
         [HttpPost, ActionName("DeleteHotel")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteHotelConfirmed(int id)
         {
-            if (HttpContext.Session.GetString("Username") != "admin")
-            {
-                TempData["ErrorMessage"] = "You are not authorized to delete hotels.";
-                _logger.LogWarning("Unauthorized attempt to POST DeleteHotelConfirmed.");
-                return RedirectToAction(nameof(Index));
-            }
-
             var hotel = await _context.Hotels.FindAsync(id);
             if (hotel == null)
             {
-                _logger.LogWarning($"DeleteHotel POST: Hotel with ID {id} not found for deletion.");
+                _logger.LogWarning($"DeleteHotel POST: Hotel with ID {id} not found for deletion by admin.");
                 TempData["ErrorMessage"] = $"Hotel with ID {id} not found.";
-                return NotFound($"Hotel with ID {id} not found.");
+                return RedirectToAction(nameof(SearchResults)); 
             }
 
             try
@@ -784,29 +702,34 @@ namespace Aryaans_Hotel_Booking.Controllers
                 var bookingsExist = await _context.Bookings.AnyAsync(b => b.HotelId == id);
                 if (bookingsExist)
                 {
-                    _logger.LogWarning($"Attempt to delete Hotel ID {id} which has existing bookings.");
+                    _logger.LogWarning($"Admin attempt to delete Hotel ID {id} which has existing bookings.");
                     TempData["ErrorMessage"] = "Cannot delete this hotel as it has existing bookings. Please remove associated bookings first.";
                     return RedirectToAction(nameof(DeleteHotel), new { id = id });
                 }
 
+                string? imagePathToDelete = hotel.ImagePath;
                 _context.Hotels.Remove(hotel);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Hotel ID {id}, Name: {hotel.Name} deleted successfully.");
                 TempData["SuccessMessage"] = $"Hotel '{hotel.Name}' was successfully deleted.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (DbUpdateException ex)
-            {
-                _logger.LogError(ex, $"Error deleting Hotel ID {id}, Name: {hotel.Name}. It might be in use.");
-                TempData["ErrorMessage"] = $"Error deleting hotel '{hotel.Name}'. It might be referenced by other records.";
-                return View("DeleteHotel", hotel);
+                _logger.LogInformation($"Hotel ID {id}, Name: {hotel.Name} deleted by admin.");
+
+                if (!string.IsNullOrEmpty(imagePathToDelete))
+                {
+                    string fullPath = Path.Combine(_webHostEnvironment.WebRootPath, imagePathToDelete.TrimStart('/'));
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        try { System.IO.File.Delete(fullPath); _logger.LogInformation($"Associated image '{fullPath}' deleted for hotel ID {id}."); }
+                        catch (Exception ex) { _logger.LogError(ex, $"Error deleting image file '{fullPath}' for deleted hotel ID {id}."); TempData["WarningMessage"] = "Hotel deleted, but couldn't remove image file."; }
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Unexpected error deleting Hotel ID {id}, Name: {hotel.Name}.");
+                _logger.LogError(ex, $"Error deleting Hotel ID {id}, Name: {hotel.Name}.");
                 TempData["ErrorMessage"] = "An unexpected error occurred while deleting the hotel.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(SearchResults)); 
             }
+            return RedirectToAction(nameof(Index)); 
         }
     }
 }
