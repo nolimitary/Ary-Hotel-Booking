@@ -5,19 +5,163 @@
     {
         ViewData["Title"] = $"Hotels in {Model.SearchDestination}";
     }
+
+    string GetSortIndicator(string fieldName)
+    {
+        if (Model.CurrentSortField?.Equals(fieldName, StringComparison.OrdinalIgnoreCase) ?? false)
+        {
+            return (Model.CurrentSortOrder?.Equals("asc", StringComparison.OrdinalIgnoreCase) ?? false) ? "▲" : "▼";
+        }
+        return "";
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        .sort-controls-wrapper {
+            background-color: rgba(0,0,0,0.1); /* Subtle background for the sort bar */
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 10px; /* Spacing between items */
+        }
+
+            .sort-controls-wrapper .sort-label {
+                color: var(--ahb-muted-text, #b3c2cc);
+                font-weight: 500;
+                margin-right: 5px; /* Space after 'Sort by:' */
+            }
+
+        .sort-link {
+            color: var(--ahb-primary-color, #74e5b2);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+            .sort-link:hover, .sort-link:focus {
+                color: #121212; /* Dark text on hover for primary color */
+                background-color: var(--ahb-primary-color, #74e5b2);
+                text-decoration: none;
+            }
+
+        .sort-indicator {
+            margin-left: 4px;
+            font-size: 0.8em;
+            color: var(--ahb-light-text, #f1f3f5);
+        }
+
+        .active-sort {
+            font-weight: 700;
+            background-color: var(--ahb-primary-color, #74e5b2);
+            color: #121212 !important; /* Dark text for active sort link */
+        }
+
+            .active-sort .sort-indicator {
+                color: #121212; /* Dark indicator on active sort */
+            }
+
+        .pagination .page-link {
+            color: var(--ahb-primary-color, #74e5b2);
+            background-color: transparent; /* Fit dark theme */
+            border-color: var(--ahb-primary-color, #74e5b2);
+        }
+
+            .pagination .page-link:hover {
+                background-color: var(--ahb-primary-color, #74e5b2);
+                color: #121212; /* Dark text on hover */
+            }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--ahb-primary-color, #74e5b2);
+            border-color: var(--ahb-primary-color, #74e5b2);
+            color: #121212; /* Dark text for active page */
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: var(--ahb-muted-text, #6c757d);
+            background-color: transparent;
+            border-color: #444; /* Darker border for disabled */
+        }
+
+        .search-params-display {
+            color: var(--ahb-muted-text, #b3c2cc);
+            font-size: 0.9rem;
+        }
+
+            .search-params-display strong {
+                color: var(--ahb-light-text, #f1f3f5);
+            }
+    </style>
 }
 
 <div class="container mt-4">
-    <h1 class="mb-4">@ViewData["Title"]</h1>
+    <h1 class="mb-3" style="color: var(--ahb-light-text, #f1f3f5);">@ViewData["Title"]</h1>
 
-    @if (!string.IsNullOrEmpty(Model.SearchDates))
-    {
-        <p><strong>Dates:</strong> @Model.SearchDates</p>
-    }
-    @if (!string.IsNullOrEmpty(Model.SearchGuests))
-    {
-        <p><strong>Guests:</strong> @Model.SearchGuests</p>
-    }
+    <div class="mb-3 search-params-display">
+        @if (!string.IsNullOrEmpty(Model.SearchDestination))
+        {
+            <span>Destination: <strong>@Model.SearchDestination</strong> | </span>
+        }
+        @if (!string.IsNullOrEmpty(Model.SearchDates) && Model.SearchDates != "Any")
+        {
+            <span>Dates: <strong>@Model.SearchDates</strong> | </span>
+        }
+        @if (!string.IsNullOrEmpty(Model.SearchGuests))
+        {
+            <span>Guests: <strong>@Model.SearchGuests</strong></span>
+        }
+    </div>
+
+    <div class="sort-controls-wrapper">
+        <span class="sort-label">Sort by:</span>
+        <a class="sort-link @((Model.CurrentSortField?.Equals("name", StringComparison.OrdinalIgnoreCase) ?? true) ? "active-sort" : "")"
+           asp-action="SearchResults"
+           asp-route-destination="@Model.SearchDestination"
+           asp-route-selectedDates="@Model.SearchDates"
+           asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-sortBy="name"
+           asp-route-sortOrder="@Model.GetOppositeSortOrder("name")"
+           asp-route-pageNumber="1">
+            Name <span class="sort-indicator">@GetSortIndicator("name")</span>
+        </a>
+        <a class="sort-link @(Model.CurrentSortField?.Equals("price", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
+           asp-action="SearchResults"
+           asp-route-destination="@Model.SearchDestination"
+           asp-route-selectedDates="@Model.SearchDates"
+           asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-sortBy="price"
+           asp-route-sortOrder="@Model.GetOppositeSortOrder("price")"
+           asp-route-pageNumber="1">
+            Price <span class="sort-indicator">@GetSortIndicator("price")</span>
+        </a>
+        <a class="sort-link @(Model.CurrentSortField?.Equals("rating", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
+           asp-action="SearchResults"
+           asp-route-destination="@Model.SearchDestination"
+           asp-route-selectedDates="@Model.SearchDates"
+           asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-sortBy="rating"
+           asp-route-sortOrder="@Model.GetOppositeSortOrder("rating")"
+           asp-route-pageNumber="1">
+            Rating <span class="sort-indicator">@GetSortIndicator("rating")</span>
+        </a>
+        <a class="sort-link @(Model.CurrentSortField?.Equals("score", StringComparison.OrdinalIgnoreCase) ?? false ? "active-sort" : "")"
+           asp-action="SearchResults"
+           asp-route-destination="@Model.SearchDestination"
+           asp-route-selectedDates="@Model.SearchDates"
+           asp-route-selectedGuests="@Model.SearchGuests"
+           asp-route-sortBy="score"
+           asp-route-sortOrder="@Model.GetOppositeSortOrder("score")"
+           asp-route-pageNumber="1">
+            Review Score <span class="sort-indicator">@GetSortIndicator("score")</span>
+        </a>
+    </div>
 
     <div class="row">
         @if (Model.Results != null && Model.Results.Any())
@@ -32,7 +176,7 @@
         else
         {
             <div class="col">
-                <p>No hotels found matching your criteria.</p>
+                <p style="color: var(--ahb-muted-text, #b3c2cc);">No hotels found matching your criteria.</p>
             </div>
         }
     </div>
@@ -48,29 +192,41 @@
                            asp-route-destination="@Model.SearchDestination"
                            asp-route-selectedDates="@Model.SearchDates"
                            asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-sortBy="@Model.CurrentSortField"
+                           asp-route-sortOrder="@Model.CurrentSortOrder"
                            asp-route-pageNumber="@(Model.CurrentPage - 1)">Previous</a>
                     </li>
                 }
                 else
                 {
-                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
                 }
 
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     if (i == Model.CurrentPage)
                     {
-                        <li class="page-item active" aria-current="page"><span class="page-link">@i</span></li>
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">@i</span>
+                        </li>
                     }
-                    else
+                    else if (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2 || i == 1 || i == Model.TotalPages)
                     {
                         <li class="page-item">
                             <a class="page-link" asp-action="SearchResults"
                                asp-route-destination="@Model.SearchDestination"
                                asp-route-selectedDates="@Model.SearchDates"
                                asp-route-selectedGuests="@Model.SearchGuests"
+                               asp-route-sortBy="@Model.CurrentSortField"
+                               asp-route-sortOrder="@Model.CurrentSortOrder"
                                asp-route-pageNumber="@i">@i</a>
                         </li>
+                    }
+                    else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                    {
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
                     }
                 }
 
@@ -81,16 +237,27 @@
                            asp-route-destination="@Model.SearchDestination"
                            asp-route-selectedDates="@Model.SearchDates"
                            asp-route-selectedGuests="@Model.SearchGuests"
+                           asp-route-sortBy="@Model.CurrentSortField"
+                           asp-route-sortOrder="@Model.CurrentSortOrder"
                            asp-route-pageNumber="@(Model.CurrentPage + 1)">Next</a>
                     </li>
                 }
                 else
                 {
-                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
                 }
             </ul>
         </nav>
-        <p class="text-center">Page @Model.CurrentPage of @Model.TotalPages (@Model.TotalCount results)</p>
+        <p class="text-center" style="color: var(--ahb-muted-text, #b3c2cc);">
+            Page @Model.CurrentPage of @Model.TotalPages (@Model.TotalCount results)
+        </p>
     }
 </div>
 
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

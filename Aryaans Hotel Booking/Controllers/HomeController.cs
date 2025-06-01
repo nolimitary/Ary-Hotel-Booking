@@ -589,17 +589,21 @@ namespace Aryaans_Hotel_Booking.Controllers
         }
 
         public async Task<IActionResult> SearchResults(
-            string? destination,
-            string? selectedDates,
-            string? selectedGuests,
-            string? sortBy = "name", // Default sort field
-            string? sortOrder = "asc", // Default sort order
-            int pageNumber = 1)
+           string? destination,
+           string? selectedDates, 
+           string? selectedGuests,  
+           int? minRating,          
+           decimal? minPrice,      
+           decimal? maxPrice,       
+           string? sortBy = "name",
+           string? sortOrder = "asc",
+           int pageNumber = 1)
         {
-            _logger.LogInformation($"Search Request: Dest='{destination}', Dates='{selectedDates}', Guests='{selectedGuests}', SortBy='{sortBy}', SortOrder='{sortOrder}', Page='{pageNumber}'");
+            _logger.LogInformation($"Search Request: Dest='{destination}', Dates='{selectedDates}', Guests='{selectedGuests}', MinRating='{minRating}', MinPrice='{minPrice}', MaxPrice='{maxPrice}', SortBy='{sortBy}', SortOrder='{sortOrder}', Page='{pageNumber}'");
 
             string decodedDestination = WebUtility.UrlDecode(destination ?? "");
             string decodedGuests = WebUtility.UrlDecode(selectedGuests ?? "");
+            string decodedDates = WebUtility.UrlDecode(selectedDates ?? "Any");
 
             int pageSize = 6;
 
@@ -611,29 +615,35 @@ namespace Aryaans_Hotel_Booking.Controllers
                                          h.City.ToLower().Contains(decodedDestination.ToLower()));
             }
 
+            if (minRating.HasValue && minRating.Value > 0)
+            {
+                query = query.Where(h => h.StarRating >= minRating.Value);
+            }
+
+            if (minPrice.HasValue && minPrice.Value > 0)
+            {
+                query = query.Where(h => h.PricePerNight >= minPrice.Value);
+            }
+            if (maxPrice.HasValue && maxPrice.Value > 0)
+            {
+                query = query.Where(h => h.PricePerNight <= maxPrice.Value);
+            }
+
             switch (sortBy?.ToLower())
             {
                 case "price":
-                    query = sortOrder?.ToLower() == "desc"
-                        ? query.OrderByDescending(h => h.PricePerNight)
-                        : query.OrderBy(h => h.PricePerNight);
+                    query = sortOrder?.ToLower() == "desc" ? query.OrderByDescending(h => h.PricePerNight) : query.OrderBy(h => h.PricePerNight);
                     break;
-                case "rating": 
-                    query = sortOrder?.ToLower() == "desc"
-                        ? query.OrderByDescending(h => h.StarRating)
-                        : query.OrderBy(h => h.StarRating);
+                case "rating":
+                    query = sortOrder?.ToLower() == "desc" ? query.OrderByDescending(h => h.StarRating) : query.OrderBy(h => h.StarRating);
                     break;
-                case "score": 
-                    query = sortOrder?.ToLower() == "desc"
-                        ? query.OrderByDescending(h => h.ReviewScore ?? 0.0) 
-                        : query.OrderBy(h => h.ReviewScore ?? 0.0);
+                case "score":
+                    query = sortOrder?.ToLower() == "desc" ? query.OrderByDescending(h => h.ReviewScore ?? 0.0) : query.OrderBy(h => h.ReviewScore ?? 0.0);
                     break;
                 case "name":
                 default:
-                    sortBy = "name"; 
-                    query = sortOrder?.ToLower() == "desc"
-                        ? query.OrderByDescending(h => h.Name)
-                        : query.OrderBy(h => h.Name);
+                    sortBy = "name";
+                    query = sortOrder?.ToLower() == "desc" ? query.OrderByDescending(h => h.Name) : query.OrderBy(h => h.Name);
                     break;
             }
 
@@ -643,8 +653,6 @@ namespace Aryaans_Hotel_Booking.Controllers
                                     .Skip((pageNumber - 1) * pageSize)
                                     .Take(pageSize)
                                     .ToListAsync();
-
-            _logger.LogInformation($"Retrieved {hotelsFromDb.Count} hotels for page {pageNumber} after sorting.");
 
             var hotelResults = new List<HotelResultViewModel>();
             foreach (var hotel in hotelsFromDb)
@@ -658,7 +666,6 @@ namespace Aryaans_Hotel_Booking.Controllers
                     LocationName = $"{hotel.City}, {hotel.Country}",
                     ReviewScore = (decimal)(hotel.ReviewScore ?? 0.0),
                     ReviewScoreText = GetReviewText((decimal)(hotel.ReviewScore ?? 0.0)),
-       
                     PricePerNight = hotel.PricePerNight,
                     CurrencySymbol = "BGN",
                 });
@@ -667,15 +674,21 @@ namespace Aryaans_Hotel_Booking.Controllers
             var viewModel = new SearchResultsViewModel
             {
                 SearchDestination = decodedDestination,
-                SearchDates = WebUtility.UrlDecode(selectedDates ?? "Any"),
+                SearchDates = decodedDates,
                 SearchGuests = decodedGuests,
                 Results = hotelResults,
+
                 CurrentPage = pageNumber,
                 PageSize = pageSize,
                 TotalCount = totalItemCount,
                 TotalPages = (int)Math.Ceiling(totalItemCount / (double)pageSize),
-                CurrentSortField = sortBy, 
-                CurrentSortOrder = sortOrder 
+
+                CurrentSortField = sortBy,
+                CurrentSortOrder = sortOrder,
+
+                MinRating = minRating,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice
             };
 
             return View("Results", viewModel);
