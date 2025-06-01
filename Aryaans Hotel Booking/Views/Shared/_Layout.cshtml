@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var username = Context.Session.GetString("Username");
+    var isLoggedIn = !string.IsNullOrEmpty(username);
+    var isAdmin = isLoggedIn && username.Equals("admin", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -7,11 +13,25 @@
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/luxury-layout.css" asp-append-version="true" />
+    @* You might also have a site.css or other global styles linked here *@
+    @* <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> *@
 
-    @RenderSection("Styles", required: false)
+    @RenderSection("Styles", required: false) @* Ensures "Styles" section from views is rendered *@
 
+    @* Style for the admin welcome link - can also be moved to luxury-layout.css *@
+    <style>
+        .navbar-nav .nav-item .nav-link.admin-welcome {
+            color: #e74c3c !important; /* Red color for admin welcome */
+            font-weight: bold !important;
+        }
+        /* Optional: Better hover for dark dropdown items if not already themed */
+        .dropdown-menu-dark .dropdown-item:hover,
+        .dropdown-menu-dark .dropdown-item:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff; /* Or your theme's hover text color */
+        }
+    </style>
 </head>
-
 <body class="ahb-dark-theme">
     <header>
         <nav class="ahb-navbar navbar navbar-expand-lg fixed-top">
@@ -24,34 +44,69 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse justify-content-end" id="mainNav">
-                    @using Microsoft.AspNetCore.Http;
+                    <ul class="navbar-nav align-items-lg-center">
 
-                    <ul class="navbar-nav">
-                        @if (!string.IsNullOrEmpty(Context.Session.GetString("Username")))
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                        <li class="nav-item">
+                            @if (isLoggedIn)
+                            {
+                                <a class="nav-link" asp-controller="Home" asp-action="SearchResults">Browse Hotels</a>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Browse Hotels</a>
+                            }
+                        </li>
+
+                        @if (isLoggedIn)
                         {
-                            var username = Context.Session.GetString("Username");
-
-                            <li class="nav-item">
-                                @if (username.Equals("admin", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <span class="nav-link text-light" style="color: red !important; font-weight: bold;">Welcome, @username!</span>
-                                }
-                                else
-                                {
-                                    <span class="nav-link text-light">Welcome, @username</span>
-                                }
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="Account" asp-action="Logout">Logout</a>
-                            </li>
+                            if (isAdmin)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle admin-welcome" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Welcome, @username!
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="adminDropdown">
+                                        <li><a class="dropdown-item" asp-controller="Home" asp-action="AddHotel">Add Hotel</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li> @* Example placeholder *@
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormAdmin" class="d-inline">
+                                                <button type="submit" class="dropdown-item">Logout</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Hello, @username
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="userDropdown">
+                                        <li><a class="dropdown-item" asp-controller="Booking" asp-action="MyBookings">My Bookings</a></li> @* Example placeholder *@
+                                        <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">My Profile</a></li> @* Example placeholder *@
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormUser" class="d-inline">
+                                                <button type="submit" class="dropdown-item">Logout</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-light" asp-controller="Account" asp-action="Register">Register</a>
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
                         }
                     </ul>
@@ -61,7 +116,8 @@
     </header>
 
     <div class="ahb-main-container">
-        <main class="ahb-main">
+        <main class="ahb-main" role="main">
+            @* Added role="main" for accessibility *@
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -91,6 +147,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.min.js" defer></script>
     <script src="~/js/site.js" asp-append-version="true" defer></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
