@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Aryaans_Hotel_Booking.Data;
 using Aryaans_Hotel_Booking.Services;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Aryaans_Hotel_Booking.Data.Entities;
 using Microsoft.AspNetCore.Identity;
+using Aryaans_Hotel_Booking.Services.Interfaces;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +35,9 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+
+builder.Services.AddScoped<IHotelService, HotelService>();
+
 var app = builder.Build();
 
 
@@ -52,9 +54,8 @@ using (var scope = app.Services.CreateScope())
         await context.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied (or database up-to-date).");
 
-        //logger.LogInformation("Attempting to seed hotel data via HotelDataSeeder...");
-        //await HotelDataSeeder.SeedHotelsAsync(context, webHostEnvironment);
-        //logger.LogInformation("Hotel data seeding process via HotelDataSeeder completed.");
+
+
 
         logger.LogInformation("Attempting to seed Identity roles and admin user...");
         await IdentityDataSeeder.SeedRolesAndAdminUserAsync(services);
