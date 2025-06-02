@@ -22,7 +22,6 @@ namespace Aryaans_Hotel_Booking.Data
         {
             base.OnModelCreating(builder);
 
-
             builder.Entity<ApplicationUser>(entity =>
             {
                 entity.HasMany(u => u.Bookings)
@@ -30,7 +29,6 @@ namespace Aryaans_Hotel_Booking.Data
                       .HasForeignKey(b => b.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
-
 
             builder.Entity<Hotel>(entity =>
             {
@@ -50,6 +48,11 @@ namespace Aryaans_Hotel_Booking.Data
                       .HasForeignKey(b => b.HotelId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasMany(h => h.Rooms)
+                      .WithOne(r => r.Hotel)
+                      .HasForeignKey(r => r.HotelId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
                 
             });
 
@@ -64,12 +67,7 @@ namespace Aryaans_Hotel_Booking.Data
                 entity.Property(r => r.IsAvailable);
                 entity.Property(r => r.Amenities);
 
-                entity.HasOne(r => r.Hotel)
-                      .WithMany(h => h.Rooms)
-                      .HasForeignKey(r => r.HotelId)
-                      .OnDelete(DeleteBehavior.Cascade);
 
-               
             });
 
             builder.Entity<Booking>(entity =>
@@ -82,6 +80,12 @@ namespace Aryaans_Hotel_Booking.Data
                 entity.Property(b => b.BookingDate).IsRequired();
 
                 entity.Property(b => b.UserId).IsRequired();
+                entity.Property(b => b.RoomId).IsRequired();
+
+                entity.HasOne(b => b.Room)
+                      .WithMany()
+                      .HasForeignKey(b => b.RoomId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

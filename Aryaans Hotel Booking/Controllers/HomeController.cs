@@ -155,6 +155,213 @@ namespace Aryaans_Hotel_Booking.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> ListRooms(int hotelId)
+        {
+            var hotel = await _context.Hotels.FindAsync(hotelId);
+            if (hotel == null)
+            {
+                TempData["ErrorMessage"] = "Hotel not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var rooms = await _context.Rooms
+                                .Where(r => r.HotelId == hotelId)
+                                .Select(r => new RoomViewModel
+                                {
+                                    Id = r.Id,
+                                    RoomNumber = r.RoomNumber,
+                                    RoomType = r.RoomType,
+                                    PricePerNight = r.PricePerNight,
+                                    Capacity = r.Capacity,
+                                    IsAvailable = r.IsAvailable,
+                                    Amenities = r.Amenities
+                                })
+                                .ToListAsync();
+
+            var viewModel = new ListRoomsViewModel
+            {
+                HotelId = hotelId,
+                HotelName = hotel.Name,
+                Rooms = rooms
+            };
+            _logger.LogInformation($"Admin listing rooms for Hotel ID: {hotelId} ({hotel.Name}). Found {rooms.Count} rooms.");
+            return View(viewModel);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> AddRoom(int hotelId)
+        {
+            var hotel = await _context.Hotels.FindAsync(hotelId);
+            if (hotel == null)
+            {
+                TempData["ErrorMessage"] = "Hotel not found. Cannot add room.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var viewModel = new AddRoomViewModel
+            {
+                HotelId = hotelId,
+                HotelName = hotel.Name,
+                IsAvailable = true
+            };
+            _logger.LogInformation($"Admin accessing AddRoom GET page for Hotel ID: {hotelId} ({hotel.Name}).");
+            return View(viewModel);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddRoom(AddRoomViewModel model)
+        {
+            var hotel = await _context.Hotels.FindAsync(model.HotelId);
+            if (hotel == null)
+            {
+                ModelState.AddModelError("HotelId", "Associated hotel not found.");
+
+                model.HotelName = "Unknown Hotel";
+            }
+            else
+            {
+                model.HotelName = hotel.Name;
+            }
+
+
+            if (ModelState.IsValid)
+            {
+                var room = new Room
+                {
+                    HotelId = model.HotelId,
+                    RoomNumber = model.RoomNumber,
+                    RoomType = model.RoomType,
+                    Description = model.Description,
+                    PricePerNight = model.PricePerNight,
+                    Capacity = model.Capacity,
+                    IsAvailable = model.IsAvailable,
+                    Amenities = model.Amenities
+                };
+
+                try
+                {
+                    _context.Rooms.Add(room);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Admin successfully added Room Number: {room.RoomNumber} to Hotel ID: {room.HotelId}. New Room ID: {room.Id}");
+                    TempData["SuccessMessage"] = $"Room '{room.RoomNumber} - {room.RoomType}' added successfully to {hotel?.Name ?? "the hotel"}.";
+                    return RedirectToAction(nameof(ListRooms), new { hotelId = model.HotelId });
+                }
+                catch (DbUpdateException ex)
+                {
+                    _logger.LogError(ex, $"Database error adding room to Hotel ID: {model.HotelId}.");
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Generic error adding room to Hotel ID: {model.HotelId}.");
+                    ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
+                }
+            }
+
+            _logger.LogWarning($"Admin AddRoom POST failed for Hotel ID: {model.HotelId}. ModelState is invalid.");
+            return View(model);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> EditRoom(int roomId)
+        {
+            var room = await _context.Rooms
+                                   .Include(r => r.Hotel)
+                                   .FirstOrDefaultAsync(r => r.Id == roomId);
+
+            if (room == null || room.Hotel == null)
+            {
+                TempData["ErrorMessage"] = "Room not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var viewModel = new EditRoomViewModel
+            {
+                Id = room.Id,
+                HotelId = room.HotelId,
+                HotelName = room.Hotel.Name,
+                RoomNumber = room.RoomNumber,
+                RoomType = room.RoomType,
+                Description = room.Description,
+                PricePerNight = room.PricePerNight,
+                Capacity = room.Capacity,
+                IsAvailable = room.IsAvailable,
+                Amenities = room.Amenities
+            };
+            _logger.LogInformation($"Admin loading EditRoom page for Room ID: {roomId} in Hotel: {room.Hotel.Name}.");
+            return View(viewModel);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditRoom(EditRoomViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning($"Admin EditRoom POST for Room ID: {model.Id} failed ModelState validation.");
+                var hotelForName = await _context.Hotels.FindAsync(model.HotelId);
+                model.HotelName = hotelForName?.Name ?? "Unknown Hotel";
+                return View(model);
+            }
+
+            var roomToUpdate = await _context.Rooms.FindAsync(model.Id);
+
+            if (roomToUpdate == null)
+            {
+                TempData["ErrorMessage"] = "Room not found for update.";
+                _logger.LogWarning($"Admin EditRoom POST: Room with ID {model.Id} not found.");
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (roomToUpdate.HotelId != model.HotelId)
+            {
+                _logger.LogError($"Security Alert: Admin EditRoom POST attempt to change HotelId for Room ID: {model.Id}.");
+                ModelState.AddModelError("", "Cannot change the associated hotel of a room.");
+                var hotelForName = await _context.Hotels.FindAsync(model.HotelId);
+                model.HotelName = hotelForName?.Name ?? "Unknown Hotel";
+                return View(model);
+            }
+
+
+            roomToUpdate.RoomNumber = model.RoomNumber;
+            roomToUpdate.RoomType = model.RoomType;
+            roomToUpdate.Description = model.Description;
+            roomToUpdate.PricePerNight = model.PricePerNight;
+            roomToUpdate.Capacity = model.Capacity;
+            roomToUpdate.IsAvailable = model.IsAvailable;
+            roomToUpdate.Amenities = model.Amenities;
+
+            try
+            {
+                _context.Update(roomToUpdate);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Admin successfully updated Room ID: {roomToUpdate.Id} for Hotel ID: {roomToUpdate.HotelId}.");
+                TempData["SuccessMessage"] = $"Room '{roomToUpdate.RoomNumber} - {roomToUpdate.RoomType}' updated successfully.";
+                return RedirectToAction(nameof(ListRooms), new { hotelId = roomToUpdate.HotelId });
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogError(ex, $"Concurrency error updating Room ID: {model.Id}.");
+                ModelState.AddModelError("", "The room was modified by another user. Please reload and try again.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating Room ID: {model.Id}.");
+                ModelState.AddModelError("", "An unexpected error occurred while updating the room.");
+            }
+
+            var hotelOriginal = await _context.Hotels.FindAsync(model.HotelId);
+            model.HotelName = hotelOriginal?.Name ?? "Unknown Hotel";
+            return View(model);
+        }
+
         public IActionResult GuestPicker() => View();
 
         public IActionResult DestinationPicker() => View();
