@@ -1,175 +1,263 @@
-using Aryaans_Hotel_Booking.Data;
-using Aryaans_Hotel_Booking.Data.Entities;
 using Aryaans_Hotel_Booking.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Aryaans_Hotel_Booking.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using System;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
-    [Authorize]
-    public class BookingController : Controller
+    public class HomeController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<BookingController> _logger;
+        private readonly ILogger<HomeController> _logger;
+        private readonly IHotelService _hotelService;
 
-        public BookingController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<BookingController> logger)
+        public HomeController(ILogger<HomeController> logger, IHotelService hotelService)
         {
-            _context = context;
-            _userManager = userManager;
             _logger = logger;
+            _hotelService = hotelService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Create(int roomId)
+        public IActionResult Index()
         {
-            var room = await _context.Rooms
-                .Include(r => r.Hotel)
-                .FirstOrDefaultAsync(r => r.Id == roomId);
-
-            if (room == null || room.Hotel == null)
-            {
-                TempData["ErrorMessage"] = "Selected room or hotel not found.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var viewModel = new CreateBookingViewModel
-            {
-                HotelId = room.HotelId,
-                HotelName = room.Hotel.Name,
-                HotelImageUrl = room.Hotel.ImagePath,
-                RoomId = room.Id,
-                RoomType = room.RoomType,
-                RoomDescription = room.Description,
-                RoomPricePerNight = room.PricePerNight,
-                RoomCapacity = room.Capacity,
-                CheckInDate = DateTime.Today.AddDays(1),
-                CheckOutDate = DateTime.Today.AddDays(2),
-                NumberOfGuests = 1
-            };
-
-            return View(viewModel);
+            return View();
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateBookingViewModel model)
+        
+        public async Task<IActionResult> SearchResults(
+            string? destination, 
+            DateTime? checkInDate,
+            DateTime? checkOutDate,
+            int adults = 1, 
+            int children = 0,
+            int? minRating = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null,
+            string? sortBy = "name",
+            string? sortOrder = "asc",
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var room = await _context.Rooms
-                .Include(r => r.Hotel)
-                .FirstOrDefaultAsync(r => r.Id == model.RoomId);
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
 
-            if (room == null || room.Hotel == null)
-            {
-                ModelState.AddModelError("", "Selected room or hotel could not be found.");
-                return View(model);
-            }
+            string? selectedDatesString = (checkInDate.HasValue && checkOutDate.HasValue) 
+                                        ? $"{checkInDate.Value:yyyy-MM-dd} to {checkOutDate.Value:yyyy-MM-dd}" 
+                                        : null;
+            string? selectedGuestsString = $"Adults: {adults}, Children: {children}";
 
-            model.HotelName = room.Hotel.Name;
-            model.HotelImageUrl = room.Hotel.ImagePath;
-            model.RoomType = room.RoomType;
-            model.RoomDescription = room.Description;
-            model.RoomPricePerNight = room.PricePerNight;
-            model.RoomCapacity = room.Capacity;
-
-            if (model.CheckInDate < DateTime.Today)
+            if (checkInDate.HasValue && checkInDate.Value < DateTime.Today)
             {
-                ModelState.AddModelError("CheckInDate", "Check-in date cannot be in the past.");
+                ModelState.AddModelError("checkInDate", "Check-in date cannot be in the past.");
             }
-            if (model.CheckOutDate <= model.CheckInDate)
+            if (checkOutDate.HasValue && checkInDate.HasValue && checkOutDate.Value <= checkInDate.Value)
             {
-                ModelState.AddModelError("CheckOutDate", "Check-out date must be after the check-in date.");
-            }
-            if (model.NumberOfGuests > room.Capacity)
-            {
-                ModelState.AddModelError("NumberOfGuests", $"Number of guests exceeds the capacity of this room ({room.Capacity}).");
+                ModelState.AddModelError("checkOutDate", "Check-out date must be after check-in date.");
             }
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Booking creation failed model validation.");
-                return View(model);
+                TempData["UserMessage"] = "Invalid search parameters. Please check your dates.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction(nameof(Index)); 
             }
 
-            var overlappingBookings = await _context.Bookings
-                .AnyAsync(b => b.RoomId == model.RoomId &&
-                                b.CheckInDate < model.CheckOutDate &&
-                                b.CheckOutDate > model.CheckInDate);
+            var searchViewModel = await _hotelService.SearchHotelsAsync(
+                destination,
+                selectedDatesString,
+                selectedGuestsString,
+                minRating,
+                minPrice,
+                maxPrice,
+                sortBy,
+                sortOrder,
+                pageNumber,
+                pageSize);
 
-            if (overlappingBookings)
+            if (searchViewModel == null || !searchViewModel.Results.Any())
             {
-                ModelState.AddModelError("", "Sorry, this room is not available for the selected dates.");
-                _logger.LogWarning($"Overlapping booking detected for RoomId: {model.RoomId} between {model.CheckInDate} and {model.CheckOutDate}");
-                return View(model);
+                TempData["UserMessage"] = "No hotels found matching your criteria. Try a different search!";
+                TempData["MessageType"] = "info";
+            }
+            
+            return View(searchViewModel);
+        }
+
+        public async Task<IActionResult> HotelDetails(int id)
+        {
+            var hotelViewModel = await _hotelService.GetHotelDetailsViewModelAsync(id);
+            if (hotelViewModel == null)
+            {
+                _logger.LogWarning($"Hotel with ID {id} not found for details view.");
+                TempData["UserMessage"] = "Sorry, the hotel you are looking for could not be found.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction(nameof(Index)); 
+            }
+            return View(hotelViewModel);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Booking(int hotelId, DateTime checkInDate, DateTime checkOutDate, int numberOfGuests)
+        {
+            var hotelDetailsResult = await _hotelService.GetHotelDetailsViewModelAsync(hotelId);
+            if (hotelDetailsResult == null)
+            {
+                TempData["UserMessage"] = "Hotel details not found. Cannot proceed with booking.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction(nameof(Index));
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
+            if (checkInDate < DateTime.Today || checkOutDate <= checkInDate)
             {
-                TempData["ErrorMessage"] = "User not found. Please log in again.";
-                return RedirectToAction("Login", "Account");
+                 TempData["UserMessage"] = "Invalid booking dates selected.";
+                 TempData["MessageType"] = "error";
+                 return RedirectToAction("HotelDetails", new { id = hotelId });
             }
 
-            var numberOfNights = (int)(model.CheckOutDate - model.CheckInDate).TotalDays;
-            var totalPrice = numberOfNights * room.PricePerNight;
+            var numberOfNights = (checkOutDate - checkInDate).Days;
+            if (numberOfNights <= 0) numberOfNights = 1;
 
-            var booking = new Booking
+            var bookingViewModel = new BookingViewModel
             {
-                HotelId = room.HotelId,
-                RoomId = model.RoomId,
-                UserId = currentUser.Id,
-                CheckInDate = model.CheckInDate,
-                CheckOutDate = model.CheckOutDate,
-                NumberOfGuests = model.NumberOfGuests,
-                TotalPrice = totalPrice,
-                BookingDate = DateTime.UtcNow
+                HotelName = hotelDetailsResult.HotelName,
+                ImageUrl = hotelDetailsResult.ImageUrl,
+                StarRating = hotelDetailsResult.StarRating,
+                LocationName = hotelDetailsResult.LocationName,
+                DistanceFromCenter = hotelDetailsResult.DistanceFromCenter,
+                ReviewScore = hotelDetailsResult.ReviewScore,
+                ReviewScoreText = hotelDetailsResult.ReviewScoreText,
+                ReviewCount = hotelDetailsResult.ReviewCount,
+                PricePerNight = hotelDetailsResult.PricePerNight,
+                CurrencySymbol = hotelDetailsResult.CurrencySymbol,
+                NumberOfNights = numberOfNights,
+                TotalPrice = numberOfNights * hotelDetailsResult.PricePerNight,
+                SelectedDates = $"{checkInDate:MMM dd, yyyy} - {checkOutDate:MMM dd, yyyy}",
+                SelectedGuests = $"{numberOfGuests} Guest(s)"
             };
 
-            try
+            ViewData["HotelId"] = hotelId;
+            ViewData["CheckInDate"] = checkInDate.ToString("yyyy-MM-dd");
+            ViewData["CheckOutDate"] = checkOutDate.ToString("yyyy-MM-dd");
+            ViewData["NumberOfGuests"] = numberOfGuests;
+            
+            return View(bookingViewModel);
+        }
+
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmBooking(CreateBookingViewModel model)
+        {
+            if (!ModelState.IsValid)
             {
-                _context.Bookings.Add(booking);
-                await _context.SaveChangesAsync();
-                _logger.LogInformation($"New booking created with ID: {booking.Id} by User: {currentUser.UserName}");
-                TempData["SuccessMessage"] = $"Your booking for {room.Hotel.Name} ({room.RoomType}) from {model.CheckInDate:MMMM dd} to {model.CheckOutDate:MMMM dd} has been confirmed!";
-                return RedirectToAction("MyBookings");
-            }
-            catch (DbUpdateException ex)
-            {
-                _logger.LogError(ex, "Error saving booking to database.");
-                ModelState.AddModelError("", "Could not save your booking due to a database error. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An unexpected error occurred while creating the booking.");
-                ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
+                TempData["UserMessage"] = "There was an error with your booking details. Please review and try again.";
+                TempData["MessageType"] = "error";
+                
+                return RedirectToAction("Booking", new { 
+                    hotelId = model.HotelId, 
+                    checkInDate = model.CheckInDate, 
+                    checkOutDate = model.CheckOutDate, 
+                    numberOfGuests = model.NumberOfGuests 
+                });
             }
 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["UserMessage"] = "You must be logged in to make a booking.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Booking", "Home", new { hotelId = model.HotelId, checkInDate = model.CheckInDate, checkOutDate = model.CheckOutDate, numberOfGuests = model.NumberOfGuests }) });
+            }
+
+            bool bookingSuccessful = true; 
+
+            if (bookingSuccessful)
+            {
+                _logger.LogInformation($"Booking supposedly created for Hotel ID: {model.HotelId}");
+                var successViewModel = new BookingSuccessViewModel
+                {
+                    HotelName = await GetHotelNameByIdFromServiceAsync(model.HotelId),
+                };
+                
+                TempData["SuccessHotelName"] = successViewModel.HotelName;
+                TempData["SuccessGuestName"] = successViewModel.GuestFullName;
+
+                return RedirectToAction(nameof(BookingSuccess), successViewModel);
+            }
+            else
+            {
+                TempData["UserMessage"] = "We couldn't confirm your booking at this time. Please try again or contact support.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Booking", new { 
+                    hotelId = model.HotelId, 
+                    checkInDate = model.CheckInDate, 
+                    checkOutDate = model.CheckOutDate, 
+                    numberOfGuests = model.NumberOfGuests 
+                });
+            }
+        }
+
+        private async Task<string> GetHotelNameByIdFromServiceAsync(int hotelId)
+        {
+            var hotelDetails = await _hotelService.GetHotelDetailsViewModelAsync(hotelId);
+            return hotelDetails?.HotelName ?? "Your Selected Hotel";
+        }
+
+
+        public IActionResult BookingSuccess(BookingSuccessViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.HotelName) && TempData.ContainsKey("SuccessHotelName"))
+            {
+                model.HotelName = TempData["SuccessHotelName"] as string;
+                model.GuestFullName = TempData["SuccessGuestName"] as string;
+            }
+            
+            if (string.IsNullOrEmpty(model.HotelName))
+            {
+                ViewData["Title"] = "Booking Confirmation";
+            } else {
+                ViewData["Title"] = $"Booking Confirmed for {model.HotelName}!";
+            }
             return View(model);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> MyBookings()
+
+        public IActionResult Privacy()
         {
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error(int? statusCode = null)
+        {
+            var errorViewModel = new ErrorViewModel
             {
-                return Challenge();
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+            };
+
+            if (statusCode.HasValue)
+            {
+                errorViewModel.StatusCode = statusCode.Value; 
+                ViewBag.StatusCode = statusCode.Value; 
+
+                if (statusCode == 400) ViewBag.ErrorMessage = "Bad Request.";
+                else if (statusCode == 401) ViewBag.ErrorMessage = "Unauthorized.";
+                else if (statusCode == 403) ViewBag.ErrorMessage = "Forbidden.";
+                else if (statusCode == 404) ViewBag.ErrorMessage = "Sorry, the resource you requested could not be found.";
+                else if (statusCode >= 500) ViewBag.ErrorMessage = "An unexpected error occurred on the server.";
             }
+            
+            if (string.IsNullOrEmpty(ViewBag.ErrorMessage))
+            {
+                 ViewBag.ErrorMessage = "An unexpected error has occurred.";
+            }
+            errorViewModel.Message = ViewBag.ErrorMessage;
 
-            var bookings = await _context.Bookings
-                .Where(b => b.UserId == currentUser.Id)
-                .Include(b => b.Hotel)
-                .Include(b => b.Room)
-                .OrderByDescending(b => b.BookingDate)
-                .ToListAsync();
-
-            return View(bookings);
+            return View(errorViewModel);
         }
     }
 }
