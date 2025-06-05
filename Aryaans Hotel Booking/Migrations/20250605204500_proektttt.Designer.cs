@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aryaans_Hotel_Booking.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250601224507_SwitchToAspNetCoreIdentity")]
-    partial class SwitchToAspNetCoreIdentity
+    [Migration("20250605204500_proektttt")]
+    partial class proektttt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -113,6 +113,9 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.Property<int>("NumberOfGuests")
                         .HasColumnType("int");
 
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -123,6 +126,8 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("HotelId");
+
+                    b.HasIndex("RoomId");
 
                     b.HasIndex("UserId");
 
@@ -179,34 +184,6 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Hotels");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "123 Luxury Lane",
-                            City = "New York",
-                            Country = "USA",
-                            Description = "A luxurious hotel in the heart of the city.",
-                            ImagePath = "/images/hotels/grand_hyatt.jpg",
-                            Name = "Grand Hyatt",
-                            PricePerNight = 300.00m,
-                            ReviewScore = 8.8000000000000007,
-                            StarRating = 5
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Address = "768 Fifth Avenue",
-                            City = "New York",
-                            Country = "USA",
-                            Description = "Iconic luxury hotel with a rich history.",
-                            ImagePath = "/images/hotels/the_plaza.jpg",
-                            Name = "The Plaza",
-                            PricePerNight = 500.00m,
-                            ReviewScore = 9.1999999999999993,
-                            StarRating = 5
-                        });
                 });
 
             modelBuilder.Entity("Aryaans_Hotel_Booking.Data.Entities.Room", b =>
@@ -254,44 +231,6 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.HasIndex("HotelId");
 
                     b.ToTable("Rooms");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Amenities = "WiFi, TV, AC, Minibar",
-                            Capacity = 2,
-                            Description = "Spacious room with a king-sized bed and city view.",
-                            HotelId = 1,
-                            IsAvailable = true,
-                            PricePerNight = 450.00m,
-                            RoomNumber = "101",
-                            RoomType = "Deluxe King"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Amenities = "WiFi, TV, AC",
-                            Capacity = 2,
-                            Description = "Comfortable room with a queen-sized bed.",
-                            HotelId = 1,
-                            IsAvailable = false,
-                            PricePerNight = 350.00m,
-                            RoomNumber = "102",
-                            RoomType = "Standard Queen"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Amenities = "WiFi, TV, AC, Minibar, Jacuzzi",
-                            Capacity = 4,
-                            Description = "Luxurious suite with a separate living area and premium amenities.",
-                            HotelId = 2,
-                            IsAvailable = true,
-                            PricePerNight = 799.99m,
-                            RoomNumber = "201",
-                            RoomType = "Plaza Suite"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -435,6 +374,12 @@ namespace Aryaans_Hotel_Booking.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Aryaans_Hotel_Booking.Data.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Aryaans_Hotel_Booking.Data.Entities.ApplicationUser", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
@@ -442,6 +387,8 @@ namespace Aryaans_Hotel_Booking.Migrations
                         .IsRequired();
 
                     b.Navigation("Hotel");
+
+                    b.Navigation("Room");
 
                     b.Navigation("User");
                 });

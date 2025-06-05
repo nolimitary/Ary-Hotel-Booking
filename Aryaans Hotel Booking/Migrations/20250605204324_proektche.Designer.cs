@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aryaans_Hotel_Booking.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250601231258_ReflectPendingModelChanges")]
-    partial class ReflectPendingModelChanges
+    [Migration("20250605204324_proektche")]
+    partial class proektche
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -113,6 +113,9 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.Property<int>("NumberOfGuests")
                         .HasColumnType("int");
 
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -123,6 +126,8 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("HotelId");
+
+                    b.HasIndex("RoomId");
 
                     b.HasIndex("UserId");
 
@@ -369,6 +374,12 @@ namespace Aryaans_Hotel_Booking.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Aryaans_Hotel_Booking.Data.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Aryaans_Hotel_Booking.Data.Entities.ApplicationUser", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
@@ -376,6 +387,8 @@ namespace Aryaans_Hotel_Booking.Migrations
                         .IsRequired();
 
                     b.Navigation("Hotel");
+
+                    b.Navigation("Room");
 
                     b.Navigation("User");
                 });
