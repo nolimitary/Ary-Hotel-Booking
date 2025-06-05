@@ -1,0 +1,129 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<style>
+    .admin-dashboard-container {
+        background-color: #2a2a2a; 
+        padding: 25px 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        color: #e0e0e0; 
+        text-align: center;
+    }
+
+    .admin-dashboard-title {
+        color: #f0ad4e; 
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        text-shadow: 1px 1px 3px #111;
+    }
+
+    .admin-dashboard-welcome {
+        font-size: 1.5rem;
+        color: #c5c5c5;
+        margin-bottom: 30px;
+    }
+
+    .admin-quick-links .card {
+        background-color: #3c3c3c;
+        border: 1px solid #555;
+        color: #e0e0e0;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        margin-bottom: 20px; 
+    }
+
+        .admin-quick-links .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+    .admin-quick-links .card-header {
+        background-color: #333333;
+        color: #f0ad4e;
+        font-weight: bold;
+        border-bottom: 1px solid #555;
+        font-size: 1.2rem;
+    }
+
+    .admin-quick-links .card-body {
+        padding: 20px;
+    }
+
+    .admin-quick-links .card-text {
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        min-height: 60px; 
+    }
+
+    .admin-quick-links .btn-admin-action {
+        background-color: #f0ad4e;
+        color: #2a2a2a; 
+        border: none;
+        font-weight: bold;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .admin-quick-links .btn-admin-action:hover {
+            background-color: #eea236;
+            color: #2a2a2a;
+        }
+
+    .admin-quick-links .btn-placeholder {
+        background-color: #555;
+        color: #aaa;
+        border: none;
+        font-weight: bold;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="admin-dashboard-container">
+    <h1 class="admin-dashboard-title">Admin Control Panel</h1>
+    <p class="admin-dashboard-welcome">Welcome, @User.Identity.Name! Manage your application efficiently.</p>
+    <hr style="border-color: #555; margin-bottom: 30px;" />
+
+    <div class="row admin-quick-links justify-content-center">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-header">
+                    User Management
+                </div>
+                <div class="card-body">
+                    <p class="card-text">View, edit, and manage user accounts and roles.</p>
+                    <a asp-area="Admin" asp-controller="UserManagement" asp-action="Index" class="btn btn-admin-action">Go to Users</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-header">
+                    Hotel Management
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Add, edit, or remove hotel listings and room details.</p>
+                    <a asp-area="" asp-controller="Home" asp-action="AddHotel" class="btn btn-admin-action">Add New Hotel</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-header">
+                    Booking Overview
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Review and manage all hotel bookings made by users.</p>
+                    <a href="#" class="btn btn-placeholder">View Bookings (Coming soon) </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
