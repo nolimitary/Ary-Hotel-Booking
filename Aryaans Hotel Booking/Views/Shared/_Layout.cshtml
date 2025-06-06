@@ -1,12 +1,8 @@
-﻿@using Microsoft.AspNetCore.Identity
-@using Aryaans_Hotel_Booking.Data.Entities
-@inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
-
+﻿﻿@using Microsoft.AspNetCore.Http
 @{
-    var userIsLoggedIn = SignInManager.IsSignedIn(User);
-    var userIsAdmin = userIsLoggedIn && User.IsInRole("Admin");
-    var currentUserName = userIsLoggedIn ? User.Identity.Name : null;
+    var username = Context.Session.GetString("Username");
+    var isLoggedIn = !string.IsNullOrEmpty(username);
+    var isAdmin = isLoggedIn && username.Equals("admin", StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -17,24 +13,22 @@
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/luxury-layout.css" asp-append-version="true" />
+    @* You might also have a site.css or other global styles linked here *@
+    @* <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> *@
 
+    @RenderSection("Styles", required: false) @* Ensures "Styles" section from views is rendered *@
 
-    @RenderSection("Styles", required: false)
-
+    @* Style for the admin welcome link - can also be moved to luxury-layout.css *@
     <style>
         .navbar-nav .nav-item .nav-link.admin-welcome {
-            color: #f0ad4e !important;
+            color: #e74c3c !important; /* Red color for admin welcome */
             font-weight: bold !important;
         }
-
+        /* Optional: Better hover for dark dropdown items if not already themed */
         .dropdown-menu-dark .dropdown-item:hover,
         .dropdown-menu-dark .dropdown-item:focus {
             background-color: rgba(255, 255, 255, 0.15);
-            color: #fff;
-        }
-
-        .ahb-main-container {
-            padding-top: 70px;
+            color: #fff; /* Or your theme's hover text color */
         }
     </style>
 </head>
@@ -42,7 +36,7 @@
     <header>
         <nav class="ahb-navbar navbar navbar-expand-lg fixed-top">
             <div class="container-fluid px-4">
-                <a class="navbar-brand ahb-logo" asp-area="" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand ahb-logo" asp-controller="Home" asp-action="Index">
                     <span class="logo-main">AHB</span>
                     <span class="logo-sub">Aryaan’s Hotel Booking</span>
                 </a>
@@ -53,29 +47,35 @@
                     <ul class="navbar-nav align-items-lg-center">
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+
                         <li class="nav-item">
-
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="SearchResults">Browse Hotels</a>
+                            @if (isLoggedIn)
+                            {
+                                <a class="nav-link" asp-controller="Home" asp-action="SearchResults">Browse Hotels</a>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Browse Hotels</a>
+                            }
                         </li>
 
-                        @if (userIsLoggedIn)
+                        @if (isLoggedIn)
                         {
-                            if (userIsAdmin)
+                            if (isAdmin)
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle admin-welcome" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Admin Menu
+                                        Welcome, @username!
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="adminDropdown">
-                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a></li>
-                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="UserManagement" asp-action="Index">Manage Users</a></li>
-                                        <li><a class="dropdown-item" asp-area="" asp-controller="Home" asp-action="AddHotel">Add Hotel</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Home" asp-action="AddHotel">Add Hotel</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li> @* Example placeholder *@
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutFormAdmin" class="d-inline">
-                                                <button type="submit" class="dropdown-item">Logout (@currentUserName)</button>
+                                            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormAdmin" class="d-inline">
+                                                <button type="submit" class="dropdown-item">Logout</button>
                                             </form>
                                         </li>
                                     </ul>
@@ -85,14 +85,14 @@
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Hello, @currentUserName
+                                        Hello, @username
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="userDropdown">
-                                        <li><a class="dropdown-item" asp-area="" asp-controller="Booking" asp-action="MyBookings">My Bookings</a></li>
-                                        <li><a class="dropdown-item" asp-area="" asp-controller="Account" asp-action="Profile">My Profile</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Booking" asp-action="MyBookings">My Bookings</a></li> @* Example placeholder *@
+                                        <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">My Profile</a></li> @* Example placeholder *@
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutFormUser" class="d-inline">
+                                            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormUser" class="d-inline">
                                                 <button type="submit" class="dropdown-item">Logout</button>
                                             </form>
                                         </li>
@@ -103,10 +103,10 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                                <a class="nav-link" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
                         }
                     </ul>
@@ -117,25 +117,17 @@
 
     <div class="ahb-main-container">
         <main class="ahb-main" role="main">
-
-            @if (TempData["UserMessage"] != null)
+            @* Added role="main" for accessibility *@
+            @if (TempData["SuccessMessage"] != null)
             {
-                var messageType = TempData["MessageType"]?.ToString() ?? "info";
-                <div class="alert alert-@messageType alert-dismissible fade show mt-3" role="alert">
-                    @TempData["UserMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-            else if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
                     @TempData["SuccessMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             }
-            else if (TempData["ErrorMessage"] != null)
+            @if (TempData["ErrorMessage"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     @TempData["ErrorMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -144,9 +136,10 @@
         </main>
     </div>
 
+
     <footer class="ahb-footer text-center">
         <div class="container-fluid">
-            &copy; @DateTime.Now.Year Aryaan’s Hotel Booking · <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; @DateTime.Now.Year Aryaan’s Hotel Booking · <a asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
 
