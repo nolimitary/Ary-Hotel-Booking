@@ -181,6 +181,112 @@ namespace Aryaans_Hotel_Booking.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Hotels");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "123 Aryaans Street, Delhi",
+                            City = "Delhi",
+                            Country = "India",
+                            Description = "A luxurious hotel in the heart of Delhi.",
+                            ImagePath = "images/hotel1.jpg",
+                            Name = "Aryaans Hotel",
+                            PricePerNight = 5000.00m,
+                            ReviewScore = 9.5,
+                            StarRating = 5
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "456 Aryaans Avenue, Goa",
+                            City = "Goa",
+                            Country = "India",
+                            Description = "A beautiful resort by the beach.",
+                            ImagePath = "images/hotel2.jpg",
+                            Name = "Aryaans Resort",
+                            PricePerNight = 7000.00m,
+                            ReviewScore = 8.8000000000000007,
+                            StarRating = 4
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "789 Aryaans Boulevard, Mumbai",
+                            City = "Mumbai",
+                            Country = "India",
+                            Description = "A royal experience in the city of dreams.",
+                            ImagePath = "images/hotel3.jpg",
+                            Name = "Aryaans Palace",
+                            PricePerNight = 10000.00m,
+                            ReviewScore = 9.0,
+                            StarRating = 5
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Address = "101 Aryaans Heritage Road, Jaipur",
+                            City = "Jaipur",
+                            Country = "India",
+                            Description = "A heritage hotel with royal architecture.",
+                            ImagePath = "images/hotel4.jpg",
+                            Name = "Aryaans Heritage Hotel",
+                            PricePerNight = 6000.00m,
+                            ReviewScore = 8.5,
+                            StarRating = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Address = "202 Aryaans Hilltop, Shimla",
+                            City = "Shimla",
+                            Country = "India",
+                            Description = "A serene resort in the mountains.",
+                            ImagePath = "images/hotel5.jpg",
+                            Name = "Aryaans Mountain Resort",
+                            PricePerNight = 8000.00m,
+                            ReviewScore = 9.1999999999999993,
+                            StarRating = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Address = "303 Aryaans Tech Park, Bangalore",
+                            City = "Bangalore",
+                            Country = "India",
+                            Description = "A modern hotel in the tech city.",
+                            ImagePath = "images/hotel6.jpg",
+                            Name = "Aryaans Urban Hotel",
+                            PricePerNight = 5500.00m,
+                            ReviewScore = 8.6999999999999993,
+                            StarRating = 4
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Address = "404 Aryaans Beach Road, Chennai",
+                            City = "Chennai",
+                            Country = "India",
+                            Description = "A coastal retreat with stunning sea views.",
+                            ImagePath = "images/hotel7.jpg",
+                            Name = "Aryaans Coastal Retreat",
+                            PricePerNight = 6500.00m,
+                            ReviewScore = 8.9000000000000004,
+                            StarRating = 4
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Address = "505 Aryaans Desert Road, Jaisalmer",
+                            City = "Jaisalmer",
+                            Country = "India",
+                            Description = "A unique desert experience with luxury amenities.",
+                            ImagePath = "images/hotel8.jpg",
+                            Name = "Aryaans Desert Oasis",
+                            PricePerNight = 7500.00m,
+                            ReviewScore = 9.3000000000000007,
+                            StarRating = 5
+                        });
                 });
 
             modelBuilder.Entity("Aryaans_Hotel_Booking.Data.Entities.Room", b =>

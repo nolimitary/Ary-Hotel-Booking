@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Aryaans_Hotel_Booking.Migrations
 {
     /// <inheritdoc />
-    public partial class proektche : Migration
+    public partial class final : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -239,6 +241,21 @@ namespace Aryaans_Hotel_Booking.Migrations
                         principalTable: "Rooms",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Hotels",
+                columns: new[] { "Id", "Address", "City", "Country", "Description", "ImagePath", "Name", "PricePerNight", "ReviewScore", "StarRating" },
+                values: new object[,]
+                {
+                    { 1, "123 Aryaans Street, Delhi", "Delhi", "India", "A luxurious hotel in the heart of Delhi.", "images/hotel1.jpg", "Aryaans Hotel", 5000.00m, 9.5, 5 },
+                    { 2, "456 Aryaans Avenue, Goa", "Goa", "India", "A beautiful resort by the beach.", "images/hotel2.jpg", "Aryaans Resort", 7000.00m, 8.8000000000000007, 4 },
+                    { 3, "789 Aryaans Boulevard, Mumbai", "Mumbai", "India", "A royal experience in the city of dreams.", "images/hotel3.jpg", "Aryaans Palace", 10000.00m, 9.0, 5 },
+                    { 4, "101 Aryaans Heritage Road, Jaipur", "Jaipur", "India", "A heritage hotel with royal architecture.", "images/hotel4.jpg", "Aryaans Heritage Hotel", 6000.00m, 8.5, 4 },
+                    { 5, "202 Aryaans Hilltop, Shimla", "Shimla", "India", "A serene resort in the mountains.", "images/hotel5.jpg", "Aryaans Mountain Resort", 8000.00m, 9.1999999999999993, 4 },
+                    { 6, "303 Aryaans Tech Park, Bangalore", "Bangalore", "India", "A modern hotel in the tech city.", "images/hotel6.jpg", "Aryaans Urban Hotel", 5500.00m, 8.6999999999999993, 4 },
+                    { 7, "404 Aryaans Beach Road, Chennai", "Chennai", "India", "A coastal retreat with stunning sea views.", "images/hotel7.jpg", "Aryaans Coastal Retreat", 6500.00m, 8.9000000000000004, 4 },
+                    { 8, "505 Aryaans Desert Road, Jaisalmer", "Jaisalmer", "India", "A unique desert experience with luxury amenities.", "images/hotel8.jpg", "Aryaans Desert Oasis", 7500.00m, 9.3000000000000007, 5 }
                 });
 
             migrationBuilder.CreateIndex(
