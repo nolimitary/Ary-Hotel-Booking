@@ -51,32 +51,43 @@
         <div class="col-md-6">
             <h4 style="color: var(--ahb-light-text);">Enter Your Details</h4>
             <form asp-action="ConfirmBooking" asp-controller="Home" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="HotelId" value="@ViewData["HotelId"]" />
+                <input type="hidden" name="CheckInDate" value="@ViewData["CheckInDate"]" />
+                <input type="hidden" name="CheckOutDate" value="@ViewData["CheckOutDate"]" />
+                <input type="hidden" name="NumberOfGuests" value="@ViewData["NumberOfGuests"]" />
+
                 <input type="hidden" name="HotelName" value="@Model.HotelName" />
+                <input type="hidden" name="TotalPrice" value="@Model.TotalPrice" />
+                <input type="hidden" name="NumberOfNights" value="@Model.NumberOfNights" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="mb-3">
                     <label for="guestName" class="form-label" style="color: var(--ahb-muted-text);">Full Name</label>
-                    <input type="text" class="form-control" id="guestName" name="GuestFullName" required style="background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: var(--ahb-light-text);">
+                    <input type="text" class="form-control" id="guestName" name="GuestFullName" required style="background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: var(--ahb-light-text);" value="@(User.Identity.IsAuthenticated ? User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.GivenName)?.Value + " " + User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Surname)?.Value : "")">
                 </div>
                 <div class="mb-3">
                     <label for="guestEmail" class="form-label" style="color: var(--ahb-muted-text);">Email Address</label>
-                    <input type="email" class="form-control" id="guestEmail" name="GuestEmail" required style="background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: var(--ahb-light-text);">
+                    <input type="email" class="form-control" id="guestEmail" name="GuestEmail" required style="background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: var(--ahb-light-text);" value="@(User.Identity.IsAuthenticated ? User.Identity.Name : "")">
                 </div>
 
+                <p style="color: var(--ahb-muted-text);">Selected Dates: @Model.SelectedDates</p>
+                <p style="color: var(--ahb-muted-text);">Number of Guests: @Model.SelectedGuests</p>
 
                 <p class="estimated-total" style="color: var(--ahb-light-text); font-size: 1.2em; margin-top: 1.5rem;">
                     Total for @Model.NumberOfNights @(Model.NumberOfNights == 1 ? "night" : "nights"):
                     <strong style="font-size: 1.1em; margin-left: 10px;">@Model.CurrencySymbol@Model.TotalPrice.ToString("N2")</strong>
                 </p>
 
-
                 <button type="submit" class="btn btn-lg w-100" style="background-color: var(--ahb-primary-color); color: var(--ahb-dark-bg); font-weight: 600; margin-top: 1rem;">
                     Confirm Booking
                 </button>
                 <p class="text-center mt-3">
-                    <a asp-action="Results" asp-controller="Home" style="color: var(--ahb-muted-text); text-decoration: none;">&larr; Back to Search Results</a>
+                    <a asp-action="SearchResults" asp-controller="Home" style="color: var(--ahb-muted-text); text-decoration: none;">&larr; Back to Search Results</a>
                 </p>
             </form>
         </div>
     </div>
-
 </div>

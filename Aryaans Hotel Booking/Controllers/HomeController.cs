@@ -1,8 +1,6 @@
 using Aryaans_Hotel_Booking.Models;
 using Aryaans_Hotel_Booking.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,7 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Diagnostics;
 using System.Globalization;
-
+using System.Linq;
+using System.Security.Claims;
+using Aryaans_Hotel_Booking.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aryaans_Hotel_Booking.Controllers
 {
@@ -20,11 +21,13 @@ namespace Aryaans_Hotel_Booking.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IHotelService _hotelService;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger, IHotelService hotelService)
+        public HomeController(ILogger<HomeController> logger, IHotelService hotelService, ApplicationDbContext context)
         {
             _logger = logger;
             _hotelService = hotelService;
+            _context = context;
         }
 
         public async Task<IActionResult> Index(string? selectedDates, string? selectedGuests, string? selectedLocation)
@@ -73,9 +76,9 @@ namespace Aryaans_Hotel_Booking.Controllers
                 return View(model);
             }
 
-            bool success = await _hotelService.AddHotelAsync(model);
+            var hotelId = await _hotelService.AddHotelAsync(model);
 
-            if (success)
+            if (hotelId)
             {
                 TempData["SuccessMessage"] = $"Hotel '{model.Name}' added successfully!";
                 return RedirectToAction("SearchResults", new { destination = model.Country });
@@ -188,7 +191,6 @@ namespace Aryaans_Hotel_Booking.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         public IActionResult DatePicker()
         {
             var startDate = DateTime.Today;
@@ -231,12 +233,50 @@ namespace Aryaans_Hotel_Booking.Controllers
         }
         public IActionResult GuestPicker() => View();
         public IActionResult DestinationPicker() => View();
-        public async Task<IActionResult> BookingDetails(string hotelName, string selectedDates)
-        {
-            var hotelEntity = await _hotelService.GetAllHotelsForApiAsync();
-            var targetHotel = hotelEntity.FirstOrDefault(h => h.Name.Equals(WebUtility.UrlDecode(hotelName ?? ""), StringComparison.OrdinalIgnoreCase));
 
-            if (targetHotel == null) return NotFound();
+        public async Task<IActionResult> BookingDetails(string hotelName, string selectedDates, int numberOfGuests = 1)
+        {
+            var decodedHotelName = WebUtility.UrlDecode(hotelName ?? "");
+            var hotelEntities = await _hotelService.GetAllHotelsForApiAsync();
+            var targetHotel = hotelEntities.FirstOrDefault(h => h.Name.Equals(decodedHotelName, StringComparison.OrdinalIgnoreCase));
+
+            if (targetHotel == null)
+            {
+                TempData["ErrorMessage"] = "Hotel not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            DateTime checkIn = DateTime.Today.AddDays(1);
+            DateTime checkOut = DateTime.Today.AddDays(2);
+            string displayDates = "Next available";
+
+            if (!string.IsNullOrEmpty(selectedDates))
+            {
+                var decodedDates = WebUtility.UrlDecode(selectedDates);
+                displayDates = decodedDates;
+                try
+                {
+                    var dates = decodedDates.Split(new[] { " to " }, StringSplitOptions.RemoveEmptyEntries);
+                    if (dates.Length == 2)
+                    {
+                        if (DateTime.TryParse(dates[0], out var parsedCheckIn) &&
+                            DateTime.TryParse(dates[1], out var parsedCheckOut))
+                        {
+                            if (parsedCheckIn >= DateTime.Today && parsedCheckOut > parsedCheckIn)
+                            {
+                                checkIn = parsedCheckIn;
+                                checkOut = parsedCheckOut;
+                                displayDates = $"{checkIn:MMM dd, yyyy} - {checkOut:MMM dd, yyyy}";
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            int nights = (checkOut - checkIn).Days > 0 ? (checkOut - checkIn).Days : 1;
+            int reviewCountForHotel = await _context.Bookings.CountAsync(b => b.HotelId == targetHotel.Id);
+
             var vm = new BookingViewModel
             {
                 HotelName = targetHotel.Name,
@@ -244,11 +284,85 @@ namespace Aryaans_Hotel_Booking.Controllers
                 StarRating = targetHotel.StarRating,
                 LocationName = $"{targetHotel.City}, {targetHotel.Country}",
                 PricePerNight = targetHotel.PricePerNight,
-                SelectedDates = WebUtility.UrlDecode(selectedDates ?? "")
+                ReviewScore = (decimal)(targetHotel.ReviewScore ?? 0),
+                ReviewCount = reviewCountForHotel,
+                CurrencySymbol = "BGN",
+                SelectedDates = displayDates,
+                SelectedGuests = $"{numberOfGuests} Guest(s)",
+                NumberOfNights = nights,
+                TotalPrice = nights * targetHotel.PricePerNight,
+                DistanceFromCenter = "N/A",
+                ReviewScoreText = GetReviewText((decimal)(targetHotel.ReviewScore ?? 0))
             };
+
+            ViewData["HotelId"] = targetHotel.Id;
+            ViewData["CheckInDate"] = checkIn.ToString("yyyy-MM-dd");
+            ViewData["CheckOutDate"] = checkOut.ToString("yyyy-MM-dd");
+            ViewData["NumberOfGuests"] = numberOfGuests;
+
             return View(vm);
         }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmBooking(CreateBookingViewModel model)
+        {
+            ModelState.Clear();
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["UserMessage"] = "You must be logged in to make a booking.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction("Login", "Account", new
+                {
+                    returnUrl = Url.Action("BookingDetails", "Home", new
+                    {
+                        hotelName = WebUtility.UrlEncode(model.HotelName),
+                        selectedDates = WebUtility.UrlEncode($"{model.CheckInDate:yyyy-MM-dd} to {model.CheckOutDate:yyyy-MM-dd}"),
+                        numberOfGuests = model.NumberOfGuests
+                    })
+                });
+            }
+
+            var hotelForBooking = await _hotelService.GetHotelByIdForApiAsync(model.HotelId);
+            if (hotelForBooking == null)
+            {
+                TempData["UserMessage"] = "Hotel not found. Cannot confirm booking.";
+                TempData["MessageType"] = "error";
+                return RedirectToAction(nameof(Index));
+            }
+
+            TempData["SuccessGuestName"] = model.GuestFullName;
+            TempData["SuccessHotelName"] = model.HotelName;
+            TempData["FromSuccess"] = "true";
+
+            return RedirectToAction("BookingSuccess");
+        }
+
+        public IActionResult BookingSuccess()
+        {
+            var model = new BookingSuccessViewModel
+            {
+                GuestFullName = TempData["SuccessGuestName"] as string,
+                HotelName = TempData["SuccessHotelName"] as string
+            };
+            return View(model);
+        }
+
+
+        private string GetReviewText(decimal score)
+        {
+            if (score >= 9.0m) return "Superb";
+            if (score >= 8.0m) return "Very Good";
+            if (score >= 7.0m) return "Good";
+            if (score >= 6.0m) return "Pleasant";
+            return score <= 0.0m ? "" : "Okay";
+        }
+
         public IActionResult Privacy() => View();
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
@@ -256,6 +370,7 @@ namespace Aryaans_Hotel_Booking.Controllers
             _logger.LogError(exceptionHandlerPathFeature?.Error, "Unhandled exception at path: {Path}", exceptionHandlerPathFeature?.Path);
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, Message = "An unexpected internal error occurred.", StatusCode = HttpContext.Response.StatusCode });
         }
+
         [Route("/Home/HandleError/{statusCode}")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult HandleError(int statusCode)
